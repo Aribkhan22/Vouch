@@ -1,0 +1,10 @@
+# Local files
+*.pdf
+.env
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
