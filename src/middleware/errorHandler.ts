@@ -10,5 +10,6 @@ export const errorHandler = (
   _next: NextFunction,
 ): void => {
   logger.error(err.message, { stack: err.stack });
-  sendError(res, err.message || 'Internal server error', 500);
+  const status = (err as Error & { statusCode?: number }).statusCode ?? 500;
+  sendError(res, err.message || 'Internal server error', status);
 };

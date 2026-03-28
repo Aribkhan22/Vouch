@@ -5,6 +5,7 @@ import professionalRoutes from './professional.routes';
 import verificationRoutes from './verification.routes';
 import requestRoutes from './request.routes';
 import chatRoutes from './chat.routes';
+import messageRoutes from './message.routes';
 import adminRoutes from './admin.routes';
 
 const router = Router();
@@ -16,7 +17,7 @@ router.use('/professionals', professionalRoutes);
 router.use('/professional/verification', verificationRoutes);
 router.use('/requests', requestRoutes);
 router.use('/chats', chatRoutes);
-router.use('/messages', chatRoutes);
+router.use('/messages', messageRoutes);
 router.use('/admin', adminRoutes);
 
 export default router;
