@@ -3,7 +3,7 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
+  SectionList,
   TouchableOpacity,
   ActivityIndicator,
   Alert,
@@ -25,6 +25,13 @@ const STATUS_COLOR: Record<string, string> = {
   ACCEPTED: '#2563EB',
   CLOSED: '#6B7280',
 };
+
+const LAWYER_CAT_SET = new Set([
+  'CONTRACT_REVIEW', 'TRADEMARK', 'LITIGATION', 'IP_PROTECTION', 'DUE_DILIGENCE',
+]);
+const CA_CAT_SET = new Set([
+  'COMPANY_INCORPORATION', 'TAX_FILING', 'COMPLIANCE',
+]);
 
 export default function MyRequestsScreen() {
   const navigation = useNavigation<Nav>();
@@ -67,6 +74,13 @@ export default function MyRequestsScreen() {
     ]);
   }, [qc]);
 
+  const allReqs = data ?? [];
+  const sections = [
+    { title: '⚖️  Lawyer Requests', data: allReqs.filter(r => LAWYER_CAT_SET.has(r.category)) },
+    { title: '📊  CA Requests', data: allReqs.filter(r => CA_CAT_SET.has(r.category)) },
+    { title: '📌  Other', data: allReqs.filter(r => r.category === 'OTHER') },
+  ].filter(s => s.data.length > 0);
+
   return (
     <SafeScreen>
       <View style={styles.header}>
@@ -81,12 +95,18 @@ export default function MyRequestsScreen() {
       {isLoading ? (
         <ActivityIndicator color={COLORS.primary} style={styles.loader} />
       ) : (
-        <FlatList
-          data={data ?? []}
+        <SectionList
+          sections={sections}
           keyExtractor={(item: ServiceRequest) => item._id}
           contentContainerStyle={styles.list}
           onRefresh={refetch}
           refreshing={false}
+          stickySectionHeadersEnabled={false}
+          renderSectionHeader={({ section }) => (
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionHeaderText}>{section.title}</Text>
+            </View>
+          )}
           renderItem={({ item }: { item: ServiceRequest }) => (
             <View style={styles.card}>
               <View style={styles.cardHeader}>
@@ -253,4 +273,19 @@ const styles = StyleSheet.create({
   empty: { alignItems: 'center', marginTop: 60, paddingHorizontal: SPACING.lg },
   emptyTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 8 },
   emptyText: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 20 },
+  sectionHeader: {
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+    marginTop: SPACING.sm,
+    marginBottom: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  sectionHeaderText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: COLORS.textSecondary,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
 });

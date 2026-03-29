@@ -12,8 +12,9 @@ import { COLORS, SPACING, BORDER_RADIUS } from './constants';
 // ---------------------------------------------------------------------------
 export const profileStyles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     padding: SPACING.lg,
+    paddingBottom: SPACING.xxl,
     backgroundColor: COLORS.background,
   },
   // Coloured banner at top
@@ -99,7 +100,7 @@ export const profileStyles = StyleSheet.create({
   },
   // Action buttons area
   actions: {
-    marginTop: 'auto' as any,
+    marginTop: SPACING.xl,
     gap: SPACING.sm,
   },
   // Sign out button — danger tint

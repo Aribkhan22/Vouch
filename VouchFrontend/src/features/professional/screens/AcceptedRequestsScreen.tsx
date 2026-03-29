@@ -30,7 +30,6 @@ export default function AcceptedRequestsScreen() {
     queryFn: () => requestApi.mine().then(r => r.data.data as ServiceRequest[]),
   });
 
-  // Only ACCEPTED requests (OPEN ones belong to startup's MyRequestsScreen)
   const jobs = (data ?? []).filter(r => r.status === 'ACCEPTED');
 
   const handleOpenChat = async (item: ServiceRequest) => {

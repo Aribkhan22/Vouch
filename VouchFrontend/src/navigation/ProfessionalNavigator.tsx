@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Text, View } from 'react-native';
@@ -20,6 +20,12 @@ import ChatScreen from '@features/chat/screens/ChatScreen';
 const Tab = createBottomTabNavigator<ProfessionalTabParamList>();
 const Stack = createNativeStackNavigator<ProfessionalStackParamList>();
 
+// Stable wrapper — React Navigation always sees the same component reference
+function ProfileTabScreen(props: any) {
+  const role = useAppSelector(s => s.auth.user?.role);
+  return role === 'CA' ? <CAProfileScreen {...props} /> : <LawyerProfileScreen {...props} />;
+}
+
 const TAB_ICONS: Record<string, string> = {
   OpenRequests: '💼',
   MyAccepted: '✅',
@@ -27,15 +33,13 @@ const TAB_ICONS: Record<string, string> = {
 };
 
 function ProfessionalTabs() {
-  const role = useAppSelector(s => s.auth.user?.role);
-  const ProfileScreen = role === 'CA' ? CAProfileScreen : LawyerProfileScreen;
   // Badge: open jobs available to this professional
   const { data: openData } = useQuery({
     queryKey: ['openRequests'],
     queryFn: () => requestApi.open().then(r => r.data.data),
     refetchInterval: 30_000,
   });
-  const openCount = ((openData as any)?.results?.length as number) || undefined;
+  const totalOpen = ((openData as any)?.results?.length as number) ?? 0;
 
   // Badge: newly accepted jobs waiting for chat
   const { data: myJobs } = useQuery({
@@ -43,7 +47,12 @@ function ProfessionalTabs() {
     queryFn: () => requestApi.mine().then(r => r.data.data as ServiceRequest[]),
     refetchInterval: 30_000,
   });
-  const acceptedCount = (myJobs ?? []).filter(r => r.status === 'ACCEPTED').length || undefined;
+  const totalAccepted = (myJobs ?? []).filter(r => r.status === 'ACCEPTED').length;
+
+  const [seenOpen, setSeenOpen] = useState(0);
+  const [seenAccepted, setSeenAccepted] = useState(0);
+  const openBadge = Math.max(0, totalOpen - seenOpen) || undefined;
+  const acceptedBadge = Math.max(0, totalAccepted - seenAccepted) || undefined;
 
   return (
     <Tab.Navigator
@@ -71,14 +80,16 @@ function ProfessionalTabs() {
       <Tab.Screen
         name="OpenRequests"
         component={OpenRequestsScreen}
-        options={{ tabBarBadge: openCount }}
+        options={{ tabBarBadge: openBadge }}
+        listeners={{ focus: () => setSeenOpen(totalOpen) }}
       />
       <Tab.Screen
         name="MyAccepted"
         component={AcceptedRequestsScreen}
-        options={{ tabBarBadge: acceptedCount }}
+        options={{ tabBarBadge: acceptedBadge }}
+        listeners={{ focus: () => setSeenAccepted(totalAccepted) }}
       />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen name="Profile" component={ProfileTabScreen} />
     </Tab.Navigator>
   );
 }

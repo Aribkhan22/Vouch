@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Text, View } from 'react-native';
@@ -32,7 +32,9 @@ function StartupTabs() {
     queryFn: () => requestApi.mine().then(r => r.data.data as ServiceRequest[]),
     refetchInterval: 30_000,
   });
-  const acceptedCount = (requests ?? []).filter(r => r.status === 'ACCEPTED').length || undefined;
+  const totalAccepted = (requests ?? []).filter(r => r.status === 'ACCEPTED').length;
+  const [seenAccepted, setSeenAccepted] = useState(0);
+  const acceptedBadge = Math.max(0, totalAccepted - seenAccepted) || undefined;
 
   return (
     <Tab.Navigator
@@ -61,7 +63,8 @@ function StartupTabs() {
       <Tab.Screen
         name="MyRequests"
         component={MyRequestsScreen}
-        options={{ tabBarBadge: acceptedCount }}
+        options={{ tabBarBadge: acceptedBadge }}
+        listeners={{ focus: () => setSeenAccepted(totalAccepted) }}
       />
       <Tab.Screen name="Profile" component={StartupProfileScreen} />
     </Tab.Navigator>

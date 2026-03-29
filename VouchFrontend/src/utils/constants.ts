@@ -16,6 +16,14 @@ export const SERVICE_CATEGORIES = [
   'OTHER',
 ] as const;
 
+export const LAWYER_CATEGORIES = [
+  'CONTRACT_REVIEW', 'TRADEMARK', 'LITIGATION', 'IP_PROTECTION', 'DUE_DILIGENCE', 'OTHER',
+] as const;
+
+export const CA_CATEGORIES = [
+  'COMPANY_INCORPORATION', 'TAX_FILING', 'COMPLIANCE', 'OTHER',
+] as const;
+
 export const CATEGORY_LABELS: Record<string, string> = {
   CONTRACT_REVIEW: 'Contract Review',
   COMPANY_INCORPORATION: 'Company Incorporation',

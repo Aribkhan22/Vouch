@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { professionalApi } from '@api/professional.api';
 import AppLoader from '@components/common/AppLoader';
-import VerifiedBadge from '@components/professional/VerifiedBadge';
 import AppButton from '@components/common/AppButton';
 import SafeScreen from '@components/common/SafeScreen';
 import { COLORS, SPACING, BORDER_RADIUS } from '@utils/constants';
@@ -36,7 +35,15 @@ export default function ProfessionalDetailScreen({
           </View>
           <Text style={styles.name}>{data.fullName}</Text>
           <Text style={styles.meta}>{data.professionType} · {data.city}</Text>
-          {data.isVerified && <VerifiedBadge />}
+          {data.isVerified ? (
+            <View style={styles.verifiedBadge}>
+              <Text style={styles.verifiedText}>✓ Verified</Text>
+            </View>
+          ) : (
+            <View style={styles.unverifiedBadge}>
+              <Text style={styles.unverifiedText}>✗ Not Verified</Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.section}>
@@ -76,6 +83,10 @@ const styles = StyleSheet.create({
   avatarText: { fontSize: 30, fontWeight: '800', color: '#fff' },
   name: { fontSize: 20, fontWeight: '800', color: COLORS.textPrimary, marginBottom: 4 },
   meta: { fontSize: 14, color: COLORS.textSecondary, marginBottom: SPACING.sm },
+  verifiedBadge: { backgroundColor: '#D1FAE5', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 4, alignSelf: 'center', marginTop: 4 },
+  verifiedText: { fontSize: 13, fontWeight: '700', color: '#059669' },
+  unverifiedBadge: { backgroundColor: '#FEE2E2', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 4, alignSelf: 'center', marginTop: 4 },
+  unverifiedText: { fontSize: 13, fontWeight: '700', color: '#DC2626' },
   section: { backgroundColor: COLORS.surface, borderRadius: BORDER_RADIUS.lg, padding: SPACING.md, marginBottom: SPACING.sm },
   sectionTitle: { fontSize: 13, fontWeight: '700', color: COLORS.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: SPACING.sm },
   detail: { fontSize: 14, color: COLORS.textPrimary, marginBottom: 4 },

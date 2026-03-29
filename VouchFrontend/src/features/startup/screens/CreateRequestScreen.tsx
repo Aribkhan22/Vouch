@@ -50,19 +50,33 @@ export default function CreateRequestScreen({ navigation }: StartupScreenProps<'
 
           <ErrorMessage message={apiError} />
 
-          <Text style={styles.label}>CATEGORY</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catScroll}>
-            {SERVICE_CATEGORIES.map(c => (
+          <Text style={styles.label}>⚖️  LAWYER SERVICES</Text>
+          <View style={styles.catWrap}>
+            {(['CONTRACT_REVIEW', 'TRADEMARK', 'LITIGATION', 'IP_PROTECTION', 'DUE_DILIGENCE'] as ServiceCategory[]).map(c => (
               <TouchableOpacity
                 key={c}
                 style={[styles.catBtn, selectedCategory === c && styles.catBtnActive]}
-                onPress={() => setValue('category', c as ServiceCategory)}>
+                onPress={() => setValue('category', c)}>
                 <Text style={[styles.catText, selectedCategory === c && styles.catTextActive]}>
                   {CATEGORY_LABELS[c]}
                 </Text>
               </TouchableOpacity>
             ))}
-          </ScrollView>
+          </View>
+
+          <Text style={[styles.label, { marginTop: SPACING.sm }]}>📊  CA SERVICES</Text>
+          <View style={styles.catWrap}>
+            {(['COMPANY_INCORPORATION', 'TAX_FILING', 'COMPLIANCE', 'OTHER'] as ServiceCategory[]).map(c => (
+              <TouchableOpacity
+                key={c}
+                style={[styles.catBtn, selectedCategory === c && styles.catBtnActive]}
+                onPress={() => setValue('category', c)}>
+                <Text style={[styles.catText, selectedCategory === c && styles.catTextActive]}>
+                  {CATEGORY_LABELS[c]}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
 
           <Controller control={control} name="description"
             render={({ field: { onChange, onBlur, value } }) => (
@@ -91,7 +105,7 @@ const styles = StyleSheet.create({
   back: { fontSize: 15, color: COLORS.primary, fontWeight: '600', marginBottom: SPACING.md },
   title: { fontSize: 22, fontWeight: '800', color: COLORS.textPrimary, marginBottom: SPACING.lg },
   label: { fontSize: 11, fontWeight: '700', color: COLORS.textSecondary, letterSpacing: 1, marginBottom: 8, textTransform: 'uppercase' },
-  catScroll: { marginBottom: SPACING.md },
+  catWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: SPACING.md },
   catBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: COLORS.border, marginRight: 8, backgroundColor: COLORS.surface },
   catBtnActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
   catText: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary },
