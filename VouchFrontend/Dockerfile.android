@@ -1,0 +1,52 @@
+# Android Build Environment - React Native
+FROM openjdk:17-jdk-slim
+
+# Install required tools
+RUN apt-get update && apt-get install -y \
+    curl \
+    wget \
+    git \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs && \
+    npm install -g npm@latest
+
+# Install Android SDK
+ENV ANDROID_HOME=/opt/android-sdk
+RUN mkdir -p ${ANDROID_HOME} && \
+    wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip && \
+    unzip commandlinetools-linux-11076708_latest.zip -d ${ANDROID_HOME} && \
+    rm commandlinetools-linux-11076708_latest.zip
+
+# Set up Android SDK
+ENV PATH=${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${PATH}
+RUN mkdir -p ${ANDROID_HOME}/cmdline-tools/latest && \
+    mv ${ANDROID_HOME}/cmdline-tools/* ${ANDROID_HOME}/cmdline-tools/latest 2>/dev/null || true
+
+# Accept licenses
+RUN yes | sdkmanager --licenses > /dev/null 2>&1 || true && \
+    sdkmanager "platforms;android-34" "build-tools;34.0.0" "ndk;25.2.9519653" > /dev/null 2>&1
+
+# Set environment
+ENV JAVA_HOME=/usr/local/openjdk-17
+ENV GRADLE_OPTS="-Xmx2048m -XX:MaxMetaspaceSize=512m"
+
+# Copy project
+WORKDIR /app
+COPY . .
+
+# Install dependencies
+WORKDIR /app/VouchFrontend
+RUN npm install
+
+# Build APK
+WORKDIR /app/VouchFrontend/android
+RUN ./gradlew clean assembleDebug --no-daemon 2>&1 | tail -50
+
+# Output path
+RUN ls -lah /app/VouchFrontend/android/app/build/outputs/apk/debug/
+
+CMD ["/bin/bash"]

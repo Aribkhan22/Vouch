@@ -9,12 +9,22 @@ import { COLORS, SPACING } from '@utils/constants';
 import { StartupScreenProps } from '@navigation/types';
 
 export default function DirectoryScreen({ navigation }: StartupScreenProps<'StartupTabs'>) {
+  const [cityInput, setCityInput] = React.useState('');
   const [city, setCity] = React.useState('');
   const [type, setType] = React.useState<'LAWYER' | 'CA' | undefined>(undefined);
 
-  const { data, isLoading, refetch } = useQuery({
+  // Debounce city input — search 500ms after user stops typing
+  React.useEffect(() => {
+    const timer = setTimeout(() => setCity(cityInput.trim()), 500);
+    return () => clearTimeout(timer);
+  }, [cityInput]);
+
+  const { data, isLoading } = useQuery({
     queryKey: ['directory', city, type],
-    queryFn: () => professionalApi.listDirectory({ city: city || undefined, type }).then(r => r.data.data),
+    queryFn: () =>
+      professionalApi
+        .listDirectory({ city: city || undefined, type, verified: false })
+        .then(r => r.data.data),
   });
 
   return (
@@ -23,12 +33,12 @@ export default function DirectoryScreen({ navigation }: StartupScreenProps<'Star
         <Text style={styles.title}>Find a Professional</Text>
         <TextInput
           style={styles.search}
-          placeholder="Filter by city..."
+          placeholder="🔍  Filter by city..."
           placeholderTextColor={COLORS.textMuted}
-          value={city}
-          onChangeText={setCity}
-          onSubmitEditing={() => refetch()}
+          value={cityInput}
+          onChangeText={setCityInput}
           returnKeyType="search"
+          autoCorrect={false}
         />
         <View style={styles.typeRow}>
           {([undefined, 'LAWYER', 'CA'] as const).map(t => (
@@ -37,7 +47,7 @@ export default function DirectoryScreen({ navigation }: StartupScreenProps<'Star
               style={[styles.typeBtn, type === t && styles.typeBtnActive]}
               onPress={() => setType(t)}>
               <Text style={[styles.typeBtnText, type === t && styles.typeBtnTextActive]}>
-                {t ?? 'All'}
+                {t === undefined ? 'All' : t === 'LAWYER' ? '⚖️  Lawyer' : '🧾  CA'}
               </Text>
             </TouchableOpacity>
           ))}
@@ -75,6 +85,6 @@ const styles = StyleSheet.create({
   typeBtnActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
   typeBtnText: { fontSize: 13, color: COLORS.textSecondary, fontWeight: '600' },
   typeBtnTextActive: { color: '#fff' },
-  list: { padding: SPACING.md },
+  list: { padding: SPACING.md, paddingBottom: SPACING.xl },
   empty: { textAlign: 'center', color: COLORS.textMuted, marginTop: 40, fontSize: 14 },
 });

@@ -12,17 +12,31 @@ import { COLORS, BORDER_RADIUS, SPACING } from '@utils/constants';
 interface AppInputProps extends TextInputProps {
   label?: string;
   error?: string;
+  required?: boolean;
   containerStyle?: ViewStyle;
 }
 
 const AppInput = forwardRef<TextInput, AppInputProps>(
-  ({ label, error, containerStyle, ...props }, ref) => {
+  // Destructure `style` as `propStyle` so it is NOT inside `...props`.
+  // Without this, `{...props}` would spread `style` AFTER the explicit style
+  // array and override it — stripping border, background, etc.
+  ({ label, error, required, containerStyle, style: propStyle, ...props }, ref) => {
     return (
       <View style={[styles.container, containerStyle]}>
-        {label ? <Text style={styles.label}>{label}</Text> : null}
+        {label ? (
+          <Text style={styles.label}>
+            {label}
+            {required ? <Text style={styles.required}> *</Text> : null}
+          </Text>
+        ) : null}
         <TextInput
           ref={ref}
-          style={[styles.input, error ? styles.inputError : null, props.style]}
+          style={[
+            styles.inputBase,
+            props.multiline ? styles.inputMultiline : styles.inputSingleLine,
+            error ? styles.inputError : null,
+            propStyle,
+          ]}
           placeholderTextColor={COLORS.textMuted}
           autoCapitalize="none"
           {...props}
@@ -48,8 +62,12 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  input: {
-    height: 50,
+  required: {
+    color: COLORS.error,
+    fontWeight: '700',
+  },
+  // Base input styles shared by single-line and multiline
+  inputBase: {
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: BORDER_RADIUS.md,
@@ -57,6 +75,17 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: COLORS.textPrimary,
     backgroundColor: COLORS.surface,
+  },
+  // Only single-line gets a fixed height
+  inputSingleLine: {
+    height: 50,
+  },
+  // Multiline grows freely
+  inputMultiline: {
+    minHeight: 110,
+    paddingTop: 12,
+    paddingBottom: 12,
+    textAlignVertical: 'top',
   },
   inputError: {
     borderColor: COLORS.error,

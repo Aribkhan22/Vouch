@@ -1,5 +1,7 @@
 import { Chat } from '../models/Chat';
 import { Message } from '../models/Message';
+import { StartupProfile } from '../models/StartupProfile';
+import { ProfessionalProfile } from '../models/ProfessionalProfile';
 
 const assertParticipant = (
   chat: { startupUserId: unknown; professionalUserId: unknown },
@@ -16,6 +18,25 @@ export const getChatByRequest = async (requestId: string, userId: string) => {
   if (!chat) throw Object.assign(new Error('Chat not found'), { statusCode: 404 });
   assertParticipant(chat, userId);
   return chat;
+};
+
+export const getChatById = async (chatId: string, userId: string) => {
+  const chat = await Chat.findById(chatId);
+  if (!chat) throw Object.assign(new Error('Chat not found'), { statusCode: 404 });
+  assertParticipant(chat, userId);
+
+  // Fetch both participant profiles concurrently to enrich the response
+  const [startupProfile, professionalProfile] = await Promise.all([
+    StartupProfile.findOne({ userId: chat.startupUserId }).lean(),
+    ProfessionalProfile.findOne({ userId: chat.professionalUserId }).lean(),
+  ]);
+
+  return {
+    ...chat.toObject(),
+    startupName: startupProfile?.companyName ?? 'Startup',
+    professionalName: professionalProfile?.fullName ?? 'Professional',
+    professionalType: professionalProfile?.professionType ?? 'PROFESSIONAL',
+  };
 };
 
 export const getMessages = async (

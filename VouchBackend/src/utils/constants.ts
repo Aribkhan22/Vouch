@@ -41,3 +41,21 @@ export const SERVICE_CATEGORIES = [
 ] as const;
 
 export type ServiceCategory = (typeof SERVICE_CATEGORIES)[number];
+
+// Categories that belong to each profession type.
+// 'OTHER' is shown to both so neither misses a generic request.
+export const LAWYER_CATEGORIES: ServiceCategory[] = [
+  'CONTRACT_REVIEW',
+  'TRADEMARK',
+  'LITIGATION',
+  'IP_PROTECTION',
+  'DUE_DILIGENCE',
+  'OTHER',
+];
+
+export const CA_CATEGORIES: ServiceCategory[] = [
+  'COMPANY_INCORPORATION',
+  'TAX_FILING',
+  'COMPLIANCE',
+  'OTHER',
+];

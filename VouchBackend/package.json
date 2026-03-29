@@ -4,7 +4,7 @@
   "description": "Vouch – Verified Directory API",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only server.ts",
+    "dev": "ts-node-dev --respawn --transpile-only --project ./tsconfig.json server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
     "seed:admin": "ts-node src/scripts/seedAdmin.ts",

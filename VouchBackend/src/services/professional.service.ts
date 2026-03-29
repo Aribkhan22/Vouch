@@ -38,15 +38,15 @@ export const listProfessionals = async (filters: {
   if (filters.city) query.city = new RegExp(filters.city, 'i');
   if (filters.type) query.professionType = filters.type;
   if (filters.specialization) query.specializations = filters.specialization;
-  if (filters.verified !== false) query.isVerified = true;
+  if (filters.verified === true) query.isVerified = true;
 
   const skip = (filters.page - 1) * filters.limit;
-  const [data, total] = await Promise.all([
+  const [results, total] = await Promise.all([
     ProfessionalProfile.find(query)
       .skip(skip)
       .limit(filters.limit)
       .sort({ createdAt: -1 }),
     ProfessionalProfile.countDocuments(query),
   ]);
-  return { data, total, page: filters.page, limit: filters.limit };
+  return { results, total, page: filters.page, limit: filters.limit };
 };

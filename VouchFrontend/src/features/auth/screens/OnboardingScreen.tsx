@@ -18,6 +18,7 @@ import AppButton from '@components/common/AppButton';
 import ErrorMessage from '@components/common/ErrorMessage';
 import { startupApi } from '@api/startup.api';
 import { professionalApi } from '@api/professional.api';
+import { useAuth } from '@hooks/useAuth';
 import { COLORS, SPACING } from '@utils/constants';
 
 // ---- STARTUP schema ----
@@ -35,8 +36,7 @@ const professionalSchema = z.object({
   experienceYears: z
     .string()
     .min(1, 'Required')
-    .transform(Number)
-    .refine(n => n >= 0 && n <= 60, 'Enter 0–60'),
+    .refine(v => !isNaN(Number(v)) && Number(v) >= 0 && Number(v) <= 60, 'Enter 0–60'),
   specializations: z.string().min(1, 'Add at least one specialization'),
   licenseNumber: z.string().min(3, 'Required'),
   feeRange: z.string().optional(),
@@ -46,7 +46,8 @@ type StartupForm = z.infer<typeof startupSchema>;
 type ProfessionalForm = z.infer<typeof professionalSchema>;
 
 export default function OnboardingScreen({ route, navigation }: AuthScreenProps<'Onboarding'>) {
-  const { role } = route.params;
+  const { role, user, accessToken, refreshToken } = route.params;
+  const { completeAuth } = useAuth();
   const [apiError, setApiError] = useState<string | null>(null);
   const isStartup = role === 'STARTUP';
 
@@ -64,9 +65,7 @@ export default function OnboardingScreen({ route, navigation }: AuthScreenProps<
     setApiError(null);
     try {
       await startupApi.upsertProfile(data);
-      Alert.alert('Profile saved!', 'Welcome to Vouch.', [
-        { text: 'Continue', onPress: () => navigation.replace('Landing') },
-      ]);
+      completeAuth(user, accessToken, refreshToken);
     } catch (err: any) {
       setApiError(err?.response?.data?.message ?? 'Failed to save profile.');
     }
@@ -84,9 +83,7 @@ export default function OnboardingScreen({ route, navigation }: AuthScreenProps<
         licenseNumber: data.licenseNumber,
         feeRange: data.feeRange,
       });
-      Alert.alert('Profile saved!', 'Next: upload verification documents.', [
-        { text: 'Continue', onPress: () => navigation.replace('Landing') },
-      ]);
+      completeAuth(user, accessToken, refreshToken);
     } catch (err: any) {
       setApiError(err?.response?.data?.message ?? 'Failed to save profile.');
     }
@@ -96,7 +93,7 @@ export default function OnboardingScreen({ route, navigation }: AuthScreenProps<
     <SafeScreen>
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <Text style={styles.title}>Set up your profile</Text>
           <Text style={styles.subtitle}>
@@ -115,6 +112,7 @@ export default function OnboardingScreen({ route, navigation }: AuthScreenProps<
                 render={({ field: { onChange, onBlur, value } }) => (
                   <AppInput
                     label="Company Name"
+                    required
                     placeholder="e.g. TechCo Inc"
                     value={value}
                     onBlur={onBlur}
@@ -130,6 +128,7 @@ export default function OnboardingScreen({ route, navigation }: AuthScreenProps<
                 render={({ field: { onChange, onBlur, value } }) => (
                   <AppInput
                     label="Industry"
+                    required
                     placeholder="e.g. SaaS, FinTech, EdTech"
                     value={value}
                     onBlur={onBlur}
@@ -145,6 +144,7 @@ export default function OnboardingScreen({ route, navigation }: AuthScreenProps<
                 render={({ field: { onChange, onBlur, value } }) => (
                   <AppInput
                     label="City"
+                    required
                     placeholder="e.g. Mumbai"
                     value={value}
                     onBlur={onBlur}
@@ -160,6 +160,7 @@ export default function OnboardingScreen({ route, navigation }: AuthScreenProps<
                 render={({ field: { onChange, onBlur, value } }) => (
                   <AppInput
                     label="About your company"
+                    required
                     placeholder="What does your company do? What legal help do you need?"
                     value={value}
                     onBlur={onBlur}
@@ -187,6 +188,7 @@ export default function OnboardingScreen({ route, navigation }: AuthScreenProps<
                 render={({ field: { onChange, onBlur, value } }) => (
                   <AppInput
                     label="Full Name"
+                    required
                     placeholder="e.g. Riya Sharma"
                     value={value}
                     onBlur={onBlur}
@@ -202,6 +204,7 @@ export default function OnboardingScreen({ route, navigation }: AuthScreenProps<
                 render={({ field: { onChange, onBlur, value } }) => (
                   <AppInput
                     label="City"
+                    required
                     placeholder="e.g. Delhi"
                     value={value}
                     onBlur={onBlur}
@@ -247,6 +250,7 @@ export default function OnboardingScreen({ route, navigation }: AuthScreenProps<
                 render={({ field: { onChange, onBlur, value } }) => (
                   <AppInput
                     label="License Number"
+                    required
                     placeholder="e.g. DL/LAW/2018/001"
                     value={value}
                     onBlur={onBlur}
@@ -281,7 +285,7 @@ export default function OnboardingScreen({ route, navigation }: AuthScreenProps<
 
           <AppButton
             title="Skip for now"
-            onPress={() => navigation.replace('Landing')}
+            onPress={() => completeAuth(user, accessToken, refreshToken)}
             variant="ghost"
             style={styles.skipBtn}
           />

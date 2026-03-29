@@ -35,5 +35,9 @@ export const professionalApi = {
   submitVerification: (formData: FormData) =>
     apiClient.post<ApiResponse<unknown>>('/professional/verification/submit', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
+      // transformRequest bypasses axios's default JSON serializer so that
+      // the FormData is passed directly to React Native's native XHR, which
+      // then sets the correct multipart boundary automatically.
+      transformRequest: [(data: FormData) => data],
     }),
 };

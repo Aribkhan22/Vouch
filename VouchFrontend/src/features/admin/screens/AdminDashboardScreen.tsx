@@ -13,7 +13,7 @@ export default function AdminDashboardScreen() {
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['verifications', 'PENDING'],
-    queryFn: () => adminApi.listVerifications('PENDING'),
+    queryFn: () => adminApi.listVerifications('PENDING').then(r => r.data.data),
   });
 
   const approveMutation = useMutation({
@@ -41,7 +41,7 @@ export default function AdminDashboardScreen() {
 
   if (isLoading) return <AppLoader message="Loading verifications..." />;
 
-  const items: VerificationRequest[] = (data as any)?.data ?? [];
+  const items: VerificationRequest[] = (data as any) ?? [];
 
   return (
     <SafeScreen>
@@ -54,9 +54,9 @@ export default function AdminDashboardScreen() {
           ListEmptyComponent={<Text style={styles.empty}>No pending verifications</Text>}
           renderItem={({ item }) => (
             <View style={styles.card}>
-              <Text style={styles.name}>{item.professional?.name ?? 'Professional'}</Text>
-              <Text style={styles.email}>{item.professional?.email}</Text>
-              <Text style={styles.docs}>{item.documents?.length ?? 0} document(s) submitted</Text>
+              <Text style={styles.name}>{(item.professionalUserId as any)?.name ?? 'Professional'}</Text>
+              <Text style={styles.email}>{(item.professionalUserId as any)?.email}</Text>
+              <Text style={styles.docs}>{item.docUrls?.length ?? 0} document(s) submitted</Text>
               <View style={styles.actions}>
                 <TouchableOpacity style={styles.approveBtn} onPress={() => confirmAction(item._id, 'approve')}>
                   <Text style={styles.approveTxt}>Approve</Text>

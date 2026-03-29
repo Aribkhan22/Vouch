@@ -1,7 +1,8 @@
 // 10.0.2.2 is the Android emulator loopback to host machine
-// For physical device, use your machine's LAN IP e.g. 192.168.x.x
-export const API_BASE_URL = 'http://10.0.2.2:5000/api/v1';
-export const SOCKET_URL = 'http://10.0.2.2:5000';
+// For physical device, use your machine's LAN IP
+const DEV_HOST = '192.168.1.11'; // LAN IP for physical device
+export const API_BASE_URL = `http://${DEV_HOST}:5000/api/v1`;
+export const SOCKET_URL = `http://${DEV_HOST}:5000`;
 
 export const SERVICE_CATEGORIES = [
   'CONTRACT_REVIEW',

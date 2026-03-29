@@ -18,6 +18,15 @@ export const getChatByRequest = async (
   }
 };
 
+export const getChat = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const chat = await chatService.getChatById(req.params.chatId, req.user!.userId);
+    sendSuccess(res, chat);
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const getMessages = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;

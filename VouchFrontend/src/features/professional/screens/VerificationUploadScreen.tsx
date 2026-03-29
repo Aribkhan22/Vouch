@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, Alert, TouchableOpacity } from 'react-native';
-import DocumentPicker, { DocumentPickerResponse } from 'react-native-document-picker';
+import { pick, isErrorWithCode, errorCodes, types, DocumentPickerResponse } from '@react-native-documents/picker';
 import SafeScreen from '@components/common/SafeScreen';
 import AppButton from '@components/common/AppButton';
 import AppLoader from '@components/common/AppLoader';
@@ -15,13 +15,13 @@ export default function VerificationUploadScreen({ navigation }: any) {
 
   const pickDocuments = async () => {
     try {
-      const results = await DocumentPicker.pick({ type: [DocumentPicker.types.pdf, DocumentPicker.types.images], allowMultiSelection: true });
+      const results = await pick({ type: [types.pdf, types.images], allowMultiSelection: true });
       setFiles(prev => {
         const combined = [...prev, ...results];
         return combined.slice(0, 3);
       });
     } catch (err) {
-      if (!DocumentPicker.isCancel(err)) {
+      if (!isErrorWithCode(err) || err.code !== errorCodes.OPERATION_CANCELED) {
         setError('Failed to pick document');
       }
     }
@@ -41,7 +41,7 @@ export default function VerificationUploadScreen({ navigation }: any) {
     try {
       const formData = new FormData();
       files.forEach(file => {
-        formData.append('documents', { uri: file.uri, type: file.type ?? 'application/octet-stream', name: file.name ?? 'document' } as any);
+        formData.append('docs', { uri: file.uri, type: file.type ?? 'application/octet-stream', name: file.name ?? 'document' } as any);
       });
       await professionalApi.submitVerification(formData);
       Alert.alert('Submitted', 'Your verification documents have been submitted for review.', [{ text: 'OK', onPress: () => navigation.goBack() }]);

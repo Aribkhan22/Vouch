@@ -10,14 +10,17 @@ interface ProfessionalCardProps {
 }
 
 export default function ProfessionalCard({ profile, onPress }: ProfessionalCardProps) {
+  const initials = (profile.fullName || '?').charAt(0).toUpperCase();
+  const specs = profile.specializations ?? [];
+
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
       <View style={styles.header}>
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{profile.fullName.charAt(0).toUpperCase()}</Text>
+          <Text style={styles.avatarText}>{initials}</Text>
         </View>
         <View style={styles.info}>
-          <Text style={styles.name}>{profile.fullName}</Text>
+          <Text style={styles.name}>{profile.fullName || 'Unknown'}</Text>
           <Text style={styles.meta}>
             {profile.professionType} · {profile.city}
           </Text>
@@ -31,7 +34,7 @@ export default function ProfessionalCard({ profile, onPress }: ProfessionalCardP
       </View>
 
       <View style={styles.tags}>
-        {profile.specializations.slice(0, 3).map(s => (
+        {specs.slice(0, 3).map(s => (
           <View key={s} style={styles.tag}>
             <Text style={styles.tagText}>{s.replace(/_/g, ' ')}</Text>
           </View>

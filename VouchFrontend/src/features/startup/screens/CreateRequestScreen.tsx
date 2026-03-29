@@ -43,7 +43,7 @@ export default function CreateRequestScreen({ navigation }: StartupScreenProps<'
 
   return (
     <SafeScreen>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <Text style={styles.back} onPress={() => navigation.goBack()}>← Back</Text>
           <Text style={styles.title}>New Service Request</Text>

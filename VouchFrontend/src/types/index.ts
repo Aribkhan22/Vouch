@@ -52,12 +52,19 @@ export interface ProfessionalProfile {
 
 export interface VerificationRequest {
   _id: string;
-  professionalUserId: string;
+  professionalUserId: string | { _id: string; name: string; email: string };
   docUrls: string[];
   status: VerifyStatus;
   adminNote?: string;
   submittedAt: string;
   reviewedAt?: string;
+}
+
+export interface AssignedProfessional {
+  fullName: string;
+  professionType: 'LAWYER' | 'CA';
+  city: string;
+  feeRange: string | null;
 }
 
 export interface ServiceRequest {
@@ -69,6 +76,7 @@ export interface ServiceRequest {
   budgetRange: string;
   status: RequestStatus;
   assignedProfessionalUserId?: string;
+  assignedProfessional?: AssignedProfessional | null;
   createdAt: string;
   acceptedAt?: string;
   closedAt?: string;
@@ -80,6 +88,13 @@ export interface Chat {
   startupUserId: string;
   professionalUserId: string;
   createdAt: string;
+}
+
+// Enriched chat returned by GET /chats/:chatId
+export interface ChatWithParticipants extends Chat {
+  startupName: string;
+  professionalName: string;
+  professionalType: 'LAWYER' | 'CA' | 'PROFESSIONAL';
 }
 
 export interface Message {

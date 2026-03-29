@@ -46,19 +46,17 @@ export default function RootNavigator() {
     );
   }
 
-  const getAppNavigator = () => {
-    if (!isAuthenticated || !user) return 'Auth';
-    if (user.role === 'STARTUP') return 'StartupApp';
-    if (user.role === 'ADMIN') return 'AdminApp';
-    return 'ProfessionalApp';
-  };
-
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName={getAppNavigator()}>
-      <Stack.Screen name="Auth" component={AuthNavigator} />
-      <Stack.Screen name="StartupApp" component={StartupNavigator} />
-      <Stack.Screen name="ProfessionalApp" component={ProfessionalNavigator} />
-      <Stack.Screen name="AdminApp" component={AdminNavigator} />
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      {!isAuthenticated ? (
+        <Stack.Screen name="Auth" component={AuthNavigator} />
+      ) : user?.role === 'STARTUP' ? (
+        <Stack.Screen name="StartupApp" component={StartupNavigator} />
+      ) : user?.role === 'ADMIN' ? (
+        <Stack.Screen name="AdminApp" component={AdminNavigator} />
+      ) : (
+        <Stack.Screen name="ProfessionalApp" component={ProfessionalNavigator} />
+      )}
     </Stack.Navigator>
   );
 }

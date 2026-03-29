@@ -57,8 +57,13 @@ export default function RegisterScreen({ navigation }: AuthScreenProps<'Register
   const onSubmit = async (data: FormData) => {
     setApiError(null);
     try {
-      const user = await register(data);
-      navigation.replace('Onboarding', { role: user.role as 'STARTUP' | 'LAWYER' | 'CA' });
+      const { user, accessToken, refreshToken } = await register(data);
+      navigation.replace('Onboarding', {
+        role: user.role as 'STARTUP' | 'LAWYER' | 'CA',
+        user,
+        accessToken,
+        refreshToken,
+      });
     } catch (err: any) {
       setApiError(err?.response?.data?.message ?? 'Registration failed. Please try again.');
     }
@@ -68,7 +73,7 @@ export default function RegisterScreen({ navigation }: AuthScreenProps<'Register
     <SafeScreen>
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
             <Text style={styles.backText}>← Back</Text>

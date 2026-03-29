@@ -1,12 +1,18 @@
 // Navigation type definitions for type-safe routing
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { User } from '../types';
 
 // --- Auth Stack ---
 export type AuthStackParamList = {
   Landing: undefined;
   Login: undefined;
   Register: undefined;
-  Onboarding: { role: 'STARTUP' | 'LAWYER' | 'CA' };
+  Onboarding: {
+    role: 'STARTUP' | 'LAWYER' | 'CA';
+    user: User;
+    accessToken: string;
+    refreshToken: string;
+  };
 };
 
 // --- Startup Bottom Tabs ---
@@ -38,9 +44,16 @@ export type ProfessionalStackParamList = {
   Chat: { requestId: string; chatId: string };
 };
 
+// --- Admin Bottom Tabs ---
+export type AdminTabParamList = {
+  Verifications: undefined;
+  Professionals: undefined;
+  AdminProfile: undefined;
+};
+
 // --- Admin Stack ---
 export type AdminStackParamList = {
-  AdminDashboard: undefined;
+  AdminTabs: undefined;
 };
 
 // --- Root Navigator ---

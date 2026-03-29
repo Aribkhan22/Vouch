@@ -1,0 +1,43 @@
+
+[32;1mName                                     [0m[32;1m Status[0m[32;1m Expected[0m[32;1m  Pass[0m
+[32;1m----                                     [0m [32;1m------[0m [32;1m--------[0m [32;1m ----[0m
+1 POST /auth/register STARTUP                201      201  True
+2 POST /auth/register LAWYER                 201      201  True
+3 POST /auth/login STARTUP                   200      200  True
+4 POST /auth/login LAWYER                    200      200  True
+5 GET /auth/me                               200      200  True
+6 POST /auth/refresh                         200      200  True
+7 PUT /startup/profile                       200      200  True
+8 GET /startup/profile/:userId               404      200 False
+9 PUT /professional/profile                  200      200  True
+10 GET /professional/profile/:userId         404      200 False
+11 GET /professionals                        200      200  True
+12 POST /professional/verification/submit    500      201 False
+13 POST /auth/login ADMIN                    200      200  True
+14 GET /admin/verifications                  200      200  True
+15 POST /admin/verifications/:id/approve     404      200 False
+16 POST /requests                            201      201  True
+17 GET /requests/mine                        200      200  True
+18 GET /requests/open                        200      200  True
+19 POST /requests/:id/accept                 403      200 False
+20 POST /requests/:id/close                  200      200  True
+21 GET /chats/by-request/:requestId          404      200 False
+22 GET /messages/:chatId                     500      200 False
+23 POST /messages/:chatId                    404      201 False
+24 POST /admin/verifications/:id/reject      404      200 False
+
+SUMMARY: 15 / 24 passed
+FAILED ENDPOINTS:
+
+[32;1mName                                     [0m[32;1m Status[0m[32;1m Expected[0m
+[32;1m----                                     [0m [32;1m------[0m [32;1m--------[0m
+8 GET /startup/profile/:userId               404      200
+10 GET /professional/profile/:userId         404      200
+12 POST /professional/verification/submit    500      201
+15 POST /admin/verifications/:id/approve     404      200
+19 POST /requests/:id/accept                 403      200
+21 GET /chats/by-request/:requestId          404      200
+22 GET /messages/:chatId                     500      200
+23 POST /messages/:chatId                    404      201
+24 POST /admin/verifications/:id/reject      404      200
+

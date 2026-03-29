@@ -29,7 +29,7 @@ export const mine = async (req: Request, res: Response, next: NextFunction) => {
 export const open = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { city } = req.query as { city?: string };
-    const result = await requestService.getOpenRequests(city);
+    const result = await requestService.getOpenRequests(city, req.user!.role);
     sendSuccess(res, result);
   } catch (err) {
     next(err);

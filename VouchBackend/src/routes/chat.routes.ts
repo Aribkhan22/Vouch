@@ -9,5 +9,6 @@ const router = Router();
 router.use(authenticate);
 
 router.get('/by-request/:requestId', chatController.getChatByRequest);
+router.get('/:chatId', chatController.getChat);
 
 export default router;

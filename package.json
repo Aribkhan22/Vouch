@@ -1,0 +1,12 @@
+{
+  "name": "vouch",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "backend": "npm --prefix VouchBackend run dev",
+    "frontend": "npm --prefix VouchFrontend run start",
+    "install:backend": "npm --prefix VouchBackend install",
+    "install:frontend": "npm --prefix VouchFrontend install",
+    "test:e2e": "npm --prefix VouchFrontend run test:e2e"
+  }
+}

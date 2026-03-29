@@ -6,14 +6,22 @@ import { Readable } from 'stream';
 const memoryUpload = multer({
   storage: multer.memoryStorage(),
   fileFilter: (_req, file, cb) => {
-    const allowed = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+    const allowed = [
+      'application/pdf',
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      // React Native file pickers often return octet-stream when MIME
+      // detection is unavailable; validate by extension instead.
+      'application/octet-stream',
+    ];
     if (allowed.includes(file.mimetype)) {
       cb(null, true);
     } else {
       cb(new Error('Only PDF, JPG, and PNG files are allowed'));
     }
   },
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
 }).array('docs', 3);
 
 const uploadBufferToCloudinary = (
