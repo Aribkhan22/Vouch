@@ -29,6 +29,12 @@ export const requestApi = {
   accept: (requestId: string) =>
     apiClient.post<ApiResponse<ServiceRequest>>(`/requests/${requestId}/accept`),
 
+  reject: (requestId: string, reason: string) =>
+    apiClient.post<ApiResponse<ServiceRequest>>(`/requests/${requestId}/reject`, { reason }),
+
   close: (requestId: string) =>
     apiClient.post<ApiResponse<ServiceRequest>>(`/requests/${requestId}/close`),
+
+  getStartupProfile: (startupUserId: string) =>
+    apiClient.get<ApiResponse<any>>(`/requests/startup/${startupUserId}/profile`),
 };

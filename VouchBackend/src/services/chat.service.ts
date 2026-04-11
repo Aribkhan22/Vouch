@@ -2,6 +2,7 @@ import { Chat } from '../models/Chat';
 import { Message } from '../models/Message';
 import { StartupProfile } from '../models/StartupProfile';
 import { ProfessionalProfile } from '../models/ProfessionalProfile';
+import { User } from '../models/User';
 
 const assertParticipant = (
   chat: { startupUserId: unknown; professionalUserId: unknown },
@@ -26,14 +27,16 @@ export const getChatById = async (chatId: string, userId: string) => {
   assertParticipant(chat, userId);
 
   // Fetch both participant profiles concurrently to enrich the response
-  const [startupProfile, professionalProfile] = await Promise.all([
+  const [startupProfile, professionalProfile, startupUser] = await Promise.all([
     StartupProfile.findOne({ userId: chat.startupUserId }).lean(),
     ProfessionalProfile.findOne({ userId: chat.professionalUserId }).lean(),
+    User.findById(chat.startupUserId).select('name').lean(),
   ]);
 
   return {
     ...chat.toObject(),
     startupName: startupProfile?.companyName ?? 'Startup',
+    startupPersonName: startupUser?.name ?? '',
     professionalName: professionalProfile?.fullName ?? 'Professional',
     professionalType: professionalProfile?.professionType ?? 'PROFESSIONAL',
   };

@@ -16,6 +16,7 @@ import LawyerProfileScreen from '@features/professional/screens/LawyerProfileScr
 import CAProfileScreen from '@features/professional/screens/CAProfileScreen';
 import VerificationUploadScreen from '@features/professional/screens/VerificationUploadScreen';
 import ChatScreen from '@features/chat/screens/ChatScreen';
+import StartupDetailScreen from '@features/professional/screens/StartupDetailScreen';
 
 const Tab = createBottomTabNavigator<ProfessionalTabParamList>();
 const Stack = createNativeStackNavigator<ProfessionalStackParamList>();
@@ -99,6 +100,7 @@ export default function ProfessionalNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="ProfessionalTabs" component={ProfessionalTabs} />
       <Stack.Screen name="VerificationUpload" component={VerificationUploadScreen} />
+      <Stack.Screen name="StartupDetail" component={StartupDetailScreen} />
       <Stack.Screen name="Chat" component={ChatScreen} />
     </Stack.Navigator>
   );

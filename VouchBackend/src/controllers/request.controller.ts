@@ -56,3 +56,25 @@ export const close = async (req: Request, res: Response, next: NextFunction) => 
     next(err);
   }
 };
+
+export const reject = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { reason } = req.body;
+    if (!reason || !String(reason).trim()) {
+      return res.status(400).json({ success: false, message: 'Rejection reason is required' });
+    }
+    const result = await requestService.rejectRequest(req.params.id, req.user!.userId, String(reason).trim());
+    sendSuccess(res, result, 'Request rejected');
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getStartupProfile = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await requestService.getStartupProfile(req.params.userId);
+    sendSuccess(res, result);
+  } catch (err) {
+    next(err);
+  }
+};

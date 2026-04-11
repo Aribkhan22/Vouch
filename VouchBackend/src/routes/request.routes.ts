@@ -13,6 +13,8 @@ router.post('/', authorize('STARTUP'), validate(createRequestSchema), requestCon
 router.get('/mine', requestController.mine);
 router.get('/open', authorize('LAWYER', 'CA'), requestController.open);
 router.post('/:id/accept', authorize('LAWYER', 'CA'), requestController.accept);
+router.post('/:id/reject', authorize('LAWYER', 'CA'), requestController.reject);
 router.post('/:id/close', authorize('STARTUP'), requestController.close);
+router.get('/startup/:userId/profile', authorize('LAWYER', 'CA'), requestController.getStartupProfile);
 
 export default router;

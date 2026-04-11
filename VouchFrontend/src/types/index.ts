@@ -3,7 +3,7 @@
 export type Role = 'STARTUP' | 'LAWYER' | 'CA' | 'ADMIN';
 export type UserStatus = 'ACTIVE' | 'SUSPENDED';
 export type VerifyStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
-export type RequestStatus = 'OPEN' | 'ACCEPTED' | 'CLOSED';
+export type RequestStatus = 'OPEN' | 'ACCEPTED' | 'CLOSED' | 'REJECTED';
 export type ProfessionType = 'LAWYER' | 'CA';
 
 export type ServiceCategory =
@@ -77,6 +77,11 @@ export interface ServiceRequest {
   status: RequestStatus;
   assignedProfessionalUserId?: string;
   assignedProfessional?: AssignedProfessional | null;
+  /** Populated for professional's own requests */
+  startupCompanyName?: string;
+  startupPersonName?: string;
+  rejectionReason?: string;
+  rejectedAt?: string;
   createdAt: string;
   acceptedAt?: string;
   closedAt?: string;
@@ -93,6 +98,7 @@ export interface Chat {
 // Enriched chat returned by GET /chats/:chatId
 export interface ChatWithParticipants extends Chat {
   startupName: string;
+  startupPersonName: string;
   professionalName: string;
   professionalType: 'LAWYER' | 'CA' | 'PROFESSIONAL';
 }

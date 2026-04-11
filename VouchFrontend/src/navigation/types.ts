@@ -41,6 +41,7 @@ export type ProfessionalTabParamList = {
 export type ProfessionalStackParamList = {
   ProfessionalTabs: undefined;
   VerificationUpload: undefined;
+  StartupDetail: { requestId: string };
   Chat: { requestId: string; chatId: string };
 };
 

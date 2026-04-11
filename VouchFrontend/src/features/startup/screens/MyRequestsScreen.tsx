@@ -24,6 +24,7 @@ const STATUS_COLOR: Record<string, string> = {
   OPEN: '#059669',
   ACCEPTED: '#2563EB',
   CLOSED: '#6B7280',
+  REJECTED: '#DC2626',
 };
 
 const LAWYER_CAT_SET = new Set([
@@ -147,6 +148,13 @@ export default function MyRequestsScreen() {
                 </View>
               )}
 
+              {item.status === 'REJECTED' && item.rejectionReason ? (
+                <View style={styles.rejectedBox}>
+                  <Text style={styles.rejectedLabel}>❌ Rejected by professional</Text>
+                  <Text style={styles.rejectedReason}>"{item.rejectionReason}"</Text>
+                </View>
+              ) : null}
+
               {item.status === 'ACCEPTED' && (
                 <TouchableOpacity
                   style={styles.chatBtn}
@@ -227,6 +235,16 @@ const styles = StyleSheet.create({
   },
   badgeText: { fontSize: 11, fontWeight: '700' },
   desc: { fontSize: 14, color: COLORS.textSecondary, marginBottom: SPACING.sm, lineHeight: 20 },
+  rejectedBox: {
+    backgroundColor: '#FEF2F2',
+    borderRadius: 8,
+    padding: SPACING.sm,
+    marginBottom: SPACING.sm,
+    borderWidth: 1,
+    borderColor: '#FECACA',
+  },
+  rejectedLabel: { fontSize: 12, fontWeight: '700', color: '#DC2626', marginBottom: 4 },
+  rejectedReason: { fontSize: 13, color: '#7F1D1D', fontStyle: 'italic' },
   meta: { flexDirection: 'row', gap: SPACING.md, marginBottom: SPACING.sm },
   metaText: { fontSize: 13, color: COLORS.textMuted },
   // Professional info row on ACCEPTED cards

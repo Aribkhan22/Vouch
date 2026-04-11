@@ -64,11 +64,11 @@ export default function ChatScreen({ route }: any) {
     setInputText('');
   };
 
-  // Resolve display name and subtitle for a given senderId
+  // Resolve display name(s) for a given senderId
   const getSenderInfo = (senderId: string): { name: string; sub: string } => {
     if (!chatInfo) return { name: '', sub: '' };
     if (senderId === chatInfo.startupUserId) {
-      return { name: chatInfo.startupName, sub: 'Startup' };
+      return { name: chatInfo.startupName, sub: chatInfo.startupPersonName };
     }
     if (senderId === chatInfo.professionalUserId) {
       return { name: chatInfo.professionalName, sub: chatInfo.professionalType };
@@ -85,6 +85,12 @@ export default function ChatScreen({ route }: any) {
     return chatInfo.startupName;
   })();
 
+  const otherSubtitle = (() => {
+    if (!chatInfo || !user) return '';
+    if (user.role !== 'STARTUP') return chatInfo.startupPersonName;
+    return '';
+  })();
+
   if (isLoading) return <AppLoader message="Loading chat..." />;
 
   return (
@@ -97,6 +103,7 @@ export default function ChatScreen({ route }: any) {
         </TouchableOpacity>
         <View style={styles.topCenter}>
           <Text style={styles.topTitle} numberOfLines={1}>{otherName}</Text>
+          {otherSubtitle ? <Text style={styles.topSubtitle} numberOfLines={1}>{otherSubtitle}</Text> : null}
         </View>
         <View style={styles.backBtn} />
       </View>
@@ -118,9 +125,10 @@ export default function ChatScreen({ route }: any) {
             return (
               <View style={[styles.bubbleWrapper, isOwn ? styles.ownWrapper : styles.otherWrapper]}>
                 {!isOwn && (name || sub) ? (
-                  <Text style={styles.senderLabel}>
-                    {name}{sub ? `  ·  ${sub}` : ''}
-                  </Text>
+                  <View style={styles.senderBlock}>
+                    <Text style={styles.senderName}>{name}</Text>
+                    {sub ? <Text style={styles.senderSub}>{sub}</Text> : null}
+                  </View>
                 ) : null}
                 <View style={[styles.bubble, isOwn ? styles.ownBubble : styles.otherBubble]}>
                   <Text style={[styles.msgText, isOwn && styles.ownText]}>{item.text}</Text>
@@ -180,17 +188,14 @@ const styles = StyleSheet.create({
   backText: { fontSize: 15, color: COLORS.primary, fontWeight: '600' },
   topCenter: { flex: 1, alignItems: 'center' },
   topTitle: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
+  topSubtitle: { fontSize: 11, color: COLORS.textSecondary, marginTop: 1 },
   list: { padding: SPACING.md, paddingBottom: SPACING.sm, flexGrow: 1, justifyContent: 'flex-end' },
   bubbleWrapper: { marginBottom: SPACING.sm },
   ownWrapper: { alignItems: 'flex-end' },
   otherWrapper: { alignItems: 'flex-start' },
-  senderLabel: {
-    fontSize: 11,
-    color: COLORS.textMuted,
-    marginBottom: 3,
-    marginHorizontal: 4,
-    fontWeight: '600',
-  },
+  senderBlock: { marginBottom: 3, marginHorizontal: 4 },
+  senderName: { fontSize: 12, fontWeight: '700', color: COLORS.primary },
+  senderSub: { fontSize: 10, color: COLORS.textMuted, marginTop: 1 },
   bubble: {
     maxWidth: '80%',
     borderRadius: BORDER_RADIUS.lg,

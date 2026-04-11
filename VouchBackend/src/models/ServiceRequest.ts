@@ -7,11 +7,13 @@ export interface IServiceRequest extends Document {
   description: string;
   city: string;
   budgetRange: string;
-  status: 'OPEN' | 'ACCEPTED' | 'CLOSED';
+  status: 'OPEN' | 'ACCEPTED' | 'CLOSED' | 'REJECTED';
   assignedProfessionalUserId?: mongoose.Types.ObjectId;
+  rejectionReason?: string;
   createdAt: Date;
   acceptedAt?: Date;
   closedAt?: Date;
+  rejectedAt?: Date;
 }
 
 const serviceRequestSchema = new Schema<IServiceRequest>(
@@ -35,8 +37,10 @@ const serviceRequestSchema = new Schema<IServiceRequest>(
       default: REQUEST_STATUS.OPEN,
     },
     assignedProfessionalUserId: { type: Schema.Types.ObjectId, ref: 'User' },
+    rejectionReason: { type: String, trim: true },
     acceptedAt: { type: Date },
     closedAt: { type: Date },
+    rejectedAt: { type: Date },
   },
   { timestamps: { createdAt: true, updatedAt: false } },
 );

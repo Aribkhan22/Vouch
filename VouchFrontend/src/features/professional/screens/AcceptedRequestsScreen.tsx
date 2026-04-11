@@ -72,6 +72,16 @@ export default function AcceptedRequestsScreen() {
                 </View>
               </View>
 
+              {/* Startup info */}
+              {item.startupCompanyName ? (
+                <View style={styles.startupRow}>
+                  <Text style={styles.startupCompany}>🏢 {item.startupCompanyName}</Text>
+                  {item.startupPersonName ? (
+                    <Text style={styles.startupPerson}>👤 {item.startupPersonName}</Text>
+                  ) : null}
+                </View>
+              ) : null}
+
               <Text style={styles.desc} numberOfLines={2}>{item.description}</Text>
 
               <View style={styles.meta}>
@@ -137,6 +147,18 @@ const styles = StyleSheet.create({
     marginLeft: SPACING.sm,
   },
   acceptedBadgeText: { fontSize: 11, fontWeight: '700', color: COLORS.primary },
+  startupRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.md,
+    marginBottom: SPACING.sm,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: '#F0F4FF',
+    borderRadius: 8,
+  },
+  startupCompany: { fontSize: 13, fontWeight: '700', color: COLORS.textPrimary },
+  startupPerson: { fontSize: 13, color: COLORS.textSecondary },
   desc: { fontSize: 14, color: COLORS.textSecondary, marginBottom: SPACING.sm, lineHeight: 20 },
   meta: { flexDirection: 'row', gap: SPACING.md, marginBottom: SPACING.sm },
   metaText: { fontSize: 13, color: COLORS.textMuted },

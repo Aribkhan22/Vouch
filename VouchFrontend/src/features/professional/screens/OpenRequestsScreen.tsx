@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Modal,
+  TextInput,
 } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
@@ -25,6 +27,8 @@ export default function OpenRequestsScreen() {
   const navigation = useNavigation<Nav>();
   const qc = useQueryClient();
   const [accepting, setAccepting] = useState<string | null>(null);
+  const [rejectModal, setRejectModal] = useState<{ requestId: string; reason: string } | null>(null);
+  const [rejecting, setRejecting] = useState(false);
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['openRequests'],
@@ -35,20 +39,29 @@ export default function OpenRequestsScreen() {
     setAccepting(item._id);
     try {
       await requestApi.accept(item._id);
-      // Invalidate both lists so UI stays fresh
       qc.invalidateQueries({ queryKey: ['openRequests'] });
       qc.invalidateQueries({ queryKey: ['myJobs'] });
-      // Chat was created by the backend during accept — fetch it immediately
       const chatRes = await chatApi.getByRequest(item._id);
       const chat = chatRes.data.data;
       navigation.navigate('Chat', { chatId: chat._id, requestId: item._id });
     } catch (err: any) {
-      Alert.alert(
-        'Cannot Accept',
-        err?.response?.data?.message ?? 'Failed to accept. Please try again.',
-      );
+      Alert.alert('Cannot Accept', err?.response?.data?.message ?? 'Failed to accept. Please try again.');
     } finally {
       setAccepting(null);
+    }
+  };
+
+  const handleRejectConfirm = async () => {
+    if (!rejectModal || !rejectModal.reason.trim()) return;
+    setRejecting(true);
+    try {
+      await requestApi.reject(rejectModal.requestId, rejectModal.reason.trim());
+      qc.invalidateQueries({ queryKey: ['openRequests'] });
+      setRejectModal(null);
+    } catch (err: any) {
+      Alert.alert('Error', err?.response?.data?.message ?? 'Failed to reject. Please try again.');
+    } finally {
+      setRejecting(false);
     }
   };
 
@@ -58,7 +71,7 @@ export default function OpenRequestsScreen() {
     <SafeScreen>
       <View style={styles.header}>
         <Text style={styles.title}>Open Jobs</Text>
-        <Text style={styles.sub}>Requests from startups needing help</Text>
+        <Text style={styles.sub}>Tap a card to view startup profile</Text>
       </View>
 
       {isLoading ? (
@@ -71,7 +84,10 @@ export default function OpenRequestsScreen() {
           onRefresh={refetch}
           refreshing={false}
           renderItem={({ item }) => (
-            <View style={styles.card}>
+            <TouchableOpacity
+              style={styles.card}
+              activeOpacity={0.85}
+              onPress={() => navigation.navigate('StartupDetail', { requestId: item._id })}>
               <View style={styles.cardHeader}>
                 <Text style={styles.category} numberOfLines={1}>
                   {CATEGORY_LABELS[item.category] ?? item.category}
@@ -81,6 +97,16 @@ export default function OpenRequestsScreen() {
                 </View>
               </View>
 
+              {/* Startup info */}
+              {item.startupCompanyName ? (
+                <View style={styles.startupRow}>
+                  <Text style={styles.startupCompany}>🏢 {item.startupCompanyName}</Text>
+                  {item.startupPersonName ? (
+                    <Text style={styles.startupPerson}>👤 {item.startupPersonName}</Text>
+                  ) : null}
+                </View>
+              ) : null}
+
               <Text style={styles.desc} numberOfLines={2}>{item.description}</Text>
 
               <View style={styles.meta}>
@@ -88,17 +114,25 @@ export default function OpenRequestsScreen() {
                 <Text style={styles.metaText}>💰 {item.budgetRange}</Text>
               </View>
 
-              <TouchableOpacity
-                style={[styles.acceptBtn, accepting === item._id && styles.acceptBtnDisabled]}
-                onPress={() => handleAccept(item)}
-                disabled={accepting !== null}>
-                {accepting === item._id ? (
-                  <ActivityIndicator color="#fff" size="small" />
-                ) : (
-                  <Text style={styles.acceptBtnText}>✓  Accept Job</Text>
-                )}
-              </TouchableOpacity>
-            </View>
+              <View style={styles.btnRow}>
+                <TouchableOpacity
+                  style={[styles.acceptBtn, accepting === item._id && styles.btnDisabled]}
+                  onPress={() => handleAccept(item)}
+                  disabled={accepting !== null}>
+                  {accepting === item._id ? (
+                    <ActivityIndicator color="#fff" size="small" />
+                  ) : (
+                    <Text style={styles.acceptBtnText}>✓ Accept</Text>
+                  )}
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.rejectBtn}
+                  onPress={() => setRejectModal({ requestId: item._id, reason: '' })}
+                  disabled={accepting !== null}>
+                  <Text style={styles.rejectBtnText}>✕ Reject</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
           )}
           ListEmptyComponent={
             <View style={styles.empty}>
@@ -107,6 +141,38 @@ export default function OpenRequestsScreen() {
             </View>
           }
         />
+      )}
+
+      {/* Reject reason modal */}
+      {rejectModal && (
+        <Modal transparent animationType="fade" onRequestClose={() => setRejectModal(null)}>
+          <View style={styles.overlay}>
+            <View style={styles.modal}>
+              <Text style={styles.modalTitle}>Reason for Rejection</Text>
+              <Text style={styles.modalSubtitle}>This will be shown to the startup:</Text>
+              <TextInput
+                style={styles.noteInput}
+                placeholder="e.g. Outside my area of expertise..."
+                placeholderTextColor={COLORS.textMuted}
+                multiline
+                numberOfLines={4}
+                value={rejectModal.reason}
+                onChangeText={r => setRejectModal(prev => prev ? { ...prev, reason: r } : null)}
+              />
+              <View style={styles.modalActions}>
+                <TouchableOpacity style={styles.cancelBtn} onPress={() => setRejectModal(null)}>
+                  <Text style={styles.cancelTxt}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.confirmRejectBtn, (!rejectModal.reason.trim() || rejecting) && styles.btnDisabled]}
+                  disabled={!rejectModal.reason.trim() || rejecting}
+                  onPress={handleRejectConfirm}>
+                  {rejecting ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.confirmRejectTxt}>Confirm Reject</Text>}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
       )}
     </SafeScreen>
   );
@@ -146,19 +212,63 @@ const styles = StyleSheet.create({
     marginLeft: SPACING.sm,
   },
   openBadgeText: { fontSize: 11, fontWeight: '700', color: '#059669' },
+  startupRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.md,
+    marginBottom: SPACING.sm,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: '#F0F4FF',
+    borderRadius: 8,
+  },
+  startupCompany: { fontSize: 13, fontWeight: '700', color: COLORS.textPrimary },
+  startupPerson: { fontSize: 13, color: COLORS.textSecondary },
   desc: { fontSize: 14, color: COLORS.textSecondary, marginBottom: SPACING.sm, lineHeight: 20 },
   meta: { flexDirection: 'row', gap: SPACING.md, marginBottom: SPACING.sm },
   metaText: { fontSize: 13, color: COLORS.textMuted },
+  btnRow: { flexDirection: 'row', gap: SPACING.sm, marginTop: SPACING.xs },
   acceptBtn: {
+    flex: 1,
     backgroundColor: COLORS.secondary,
     borderRadius: BORDER_RADIUS.md,
     paddingVertical: 10,
     alignItems: 'center',
-    marginTop: SPACING.xs,
   },
-  acceptBtnDisabled: { backgroundColor: COLORS.border },
   acceptBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  rejectBtn: {
+    flex: 1,
+    backgroundColor: '#FEE2E2',
+    borderRadius: BORDER_RADIUS.md,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
+  },
+  rejectBtnText: { color: COLORS.error, fontWeight: '700', fontSize: 14 },
+  btnDisabled: { opacity: 0.5 },
   empty: { alignItems: 'center', marginTop: 60, paddingHorizontal: SPACING.lg },
   emptyTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 8 },
   emptyText: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center' },
+  // Modal
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: SPACING.lg },
+  modal: { backgroundColor: COLORS.surface, borderRadius: 16, padding: SPACING.lg, width: '100%' },
+  modalTitle: { fontSize: 18, fontWeight: '800', color: COLORS.textPrimary, marginBottom: 4 },
+  modalSubtitle: { fontSize: 13, color: COLORS.textSecondary, marginBottom: SPACING.sm },
+  noteInput: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 10,
+    padding: SPACING.sm,
+    fontSize: 14,
+    color: COLORS.textPrimary,
+    minHeight: 80,
+    textAlignVertical: 'top',
+    marginBottom: SPACING.md,
+  },
+  modalActions: { flexDirection: 'row', gap: SPACING.sm },
+  cancelBtn: { flex: 1, borderWidth: 1, borderColor: COLORS.border, borderRadius: 8, paddingVertical: SPACING.sm, alignItems: 'center' },
+  cancelTxt: { fontWeight: '600', color: COLORS.textSecondary },
+  confirmRejectBtn: { flex: 1, backgroundColor: COLORS.error, borderRadius: 8, paddingVertical: SPACING.sm, alignItems: 'center' },
+  confirmRejectTxt: { color: '#fff', fontWeight: '700' },
 });

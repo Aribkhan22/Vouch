@@ -1,5 +1,7 @@
 import { ServiceRequest } from '../models/ServiceRequest';
 import { ProfessionalProfile } from '../models/ProfessionalProfile';
+import { StartupProfile } from '../models/StartupProfile';
+import { User } from '../models/User';
 import { Chat } from '../models/Chat';
 import { ServiceCategory, LAWYER_CATEGORIES, CA_CATEGORIES } from '../utils/constants';
 
@@ -12,6 +14,17 @@ export const createRequest = async (
     budgetRange: string;
   },
 ) => {
+  // Block if startup already has an active (OPEN or ACCEPTED) request
+  const active = await ServiceRequest.findOne({
+    createdByStartupUserId: startupUserId,
+    status: { $in: ['OPEN', 'ACCEPTED'] },
+  });
+  if (active) {
+    throw Object.assign(
+      new Error('You already have an active request. Wait for it to be completed or rejected before creating a new one.'),
+      { statusCode: 409 },
+    );
+  }
   return ServiceRequest.create({ createdByStartupUserId: startupUserId, ...data });
 };
 
@@ -23,7 +36,28 @@ export const getMyRequests = async (userId: string, role: string) => {
 
   const requests = await ServiceRequest.find(query).sort({ createdAt: -1 }).lean();
 
-  if (role !== 'STARTUP') return requests;
+  if (role !== 'STARTUP') {
+    // Enrich professional's requests with startup company name and person name
+    const startupUserIds = requests.map(r => r.createdByStartupUserId);
+
+    const [startupProfiles, startupUsers] = await Promise.all([
+      StartupProfile.find({ userId: { $in: startupUserIds } })
+        .select('userId companyName')
+        .lean(),
+      User.find({ _id: { $in: startupUserIds } })
+        .select('_id name')
+        .lean(),
+    ]);
+
+    const profileMap = new Map(startupProfiles.map(p => [p.userId.toString(), p.companyName]));
+    const userMap = new Map(startupUsers.map(u => [u._id.toString(), u.name]));
+
+    return requests.map(r => ({
+      ...r,
+      startupCompanyName: profileMap.get(r.createdByStartupUserId.toString()) ?? 'Startup',
+      startupPersonName: userMap.get(r.createdByStartupUserId.toString()) ?? '',
+    }));
+  }
 
   // For startups: enrich each ACCEPTED request with the professional's profile
   const acceptedIds = requests
@@ -58,10 +92,24 @@ export const getMyRequests = async (userId: string, role: string) => {
 export const getOpenRequests = async (city?: string, role?: string) => {
   const query: Record<string, unknown> = { status: 'OPEN' };
   if (city) query.city = new RegExp(city, 'i');
-  // Filter categories so LAWYER only sees lawyer-relevant work and CA sees CA work.
   if (role === 'LAWYER') query.category = { $in: LAWYER_CATEGORIES };
   else if (role === 'CA') query.category = { $in: CA_CATEGORIES };
-  const results = await ServiceRequest.find(query).sort({ createdAt: -1 });
+  const requests = await ServiceRequest.find(query).sort({ createdAt: -1 }).lean();
+
+  // Enrich with startup company name and person name
+  const startupUserIds = requests.map(r => r.createdByStartupUserId);
+  const [startupProfiles, startupUsers] = await Promise.all([
+    StartupProfile.find({ userId: { $in: startupUserIds } }).select('userId companyName').lean(),
+    User.find({ _id: { $in: startupUserIds } }).select('_id name').lean(),
+  ]);
+  const profileMap = new Map(startupProfiles.map(p => [p.userId.toString(), p.companyName]));
+  const userMap = new Map(startupUsers.map(u => [u._id.toString(), u.name]));
+
+  const results = requests.map(r => ({
+    ...r,
+    startupCompanyName: profileMap.get(r.createdByStartupUserId.toString()) ?? 'Startup',
+    startupPersonName: userMap.get(r.createdByStartupUserId.toString()) ?? '',
+  }));
   return { results, total: results.length };
 };
 
@@ -117,4 +165,36 @@ export const closeRequest = async (requestId: string, startupUserId: string) => 
     });
   }
   return request;
+};
+
+export const rejectRequest = async (
+  requestId: string,
+  professionalUserId: string,
+  reason: string,
+) => {
+  const request = await ServiceRequest.findOneAndUpdate(
+    { _id: requestId, status: { $in: ['OPEN', 'ACCEPTED'] } },
+    {
+      status: 'REJECTED',
+      assignedProfessionalUserId: professionalUserId,
+      rejectionReason: reason,
+      rejectedAt: new Date(),
+    },
+    { new: true },
+  );
+  if (!request) {
+    throw Object.assign(new Error('Request not found or cannot be rejected'), {
+      statusCode: 404,
+    });
+  }
+  return request;
+};
+
+export const getStartupProfile = async (startupUserId: string) => {
+  const [profile, user] = await Promise.all([
+    StartupProfile.findOne({ userId: startupUserId }).lean(),
+    User.findById(startupUserId).select('name email').lean(),
+  ]);
+  if (!profile) throw Object.assign(new Error('Startup profile not found'), { statusCode: 404 });
+  return { ...profile, personName: user?.name ?? '', email: user?.email ?? '' };
 };
