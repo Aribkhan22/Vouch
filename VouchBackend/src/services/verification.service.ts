@@ -7,7 +7,7 @@ export const submitVerification = async (userId: string, docUrls: string[]) => {
     status: 'PENDING',
   });
   if (existing) {
-    throw Object.assign(new Error('A pending verification already exists'), {
+    throw Object.assign(new Error('You already have a pending verification. Please wait for the review to complete.'), {
       statusCode: 409,
     });
   }
@@ -24,9 +24,9 @@ export const listVerifications = async (status?: string) => {
 
 export const approveVerification = async (id: string, adminId: string) => {
   const req = await VerificationRequest.findById(id);
-  if (!req) throw Object.assign(new Error('Verification not found'), { statusCode: 404 });
+  if (!req) throw Object.assign(new Error('Verification request not found.'), { statusCode: 404 });
   if (req.status !== 'PENDING') {
-    throw Object.assign(new Error('Already reviewed'), { statusCode: 409 });
+    throw Object.assign(new Error('This verification has already been reviewed.'), { statusCode: 409 });
   }
   req.status = 'APPROVED';
   req.reviewedBy = adminId as unknown as import('mongoose').Types.ObjectId;
@@ -46,9 +46,9 @@ export const rejectVerification = async (
   adminNote: string,
 ) => {
   const req = await VerificationRequest.findById(id);
-  if (!req) throw Object.assign(new Error('Verification not found'), { statusCode: 404 });
+  if (!req) throw Object.assign(new Error('Verification request not found.'), { statusCode: 404 });
   if (req.status !== 'PENDING') {
-    throw Object.assign(new Error('Already reviewed'), { statusCode: 409 });
+    throw Object.assign(new Error('This verification has already been reviewed.'), { statusCode: 409 });
   }
   req.status = 'REJECTED';
   req.reviewedBy = adminId as unknown as import('mongoose').Types.ObjectId;

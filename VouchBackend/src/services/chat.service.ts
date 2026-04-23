@@ -10,20 +10,20 @@ const assertParticipant = (
 ) => {
   const ids = [chat.startupUserId?.toString(), chat.professionalUserId?.toString()];
   if (!ids.includes(userId)) {
-    throw Object.assign(new Error('Forbidden'), { statusCode: 403 });
+    throw Object.assign(new Error('You do not have access to this chat.'), { statusCode: 403 });
   }
 };
 
 export const getChatByRequest = async (requestId: string, userId: string) => {
   const chat = await Chat.findOne({ requestId });
-  if (!chat) throw Object.assign(new Error('Chat not found'), { statusCode: 404 });
+  if (!chat) throw Object.assign(new Error('Chat conversation not found.'), { statusCode: 404 });
   assertParticipant(chat, userId);
   return chat;
 };
 
 export const getChatById = async (chatId: string, userId: string) => {
   const chat = await Chat.findById(chatId);
-  if (!chat) throw Object.assign(new Error('Chat not found'), { statusCode: 404 });
+  if (!chat) throw Object.assign(new Error('Chat conversation not found.'), { statusCode: 404 });
   assertParticipant(chat, userId);
 
   // Fetch both participant profiles concurrently to enrich the response
@@ -49,7 +49,7 @@ export const getMessages = async (
   limit = 30,
 ) => {
   const chat = await Chat.findById(chatId);
-  if (!chat) throw Object.assign(new Error('Chat not found'), { statusCode: 404 });
+  if (!chat) throw Object.assign(new Error('Chat conversation not found.'), { statusCode: 404 });
   assertParticipant(chat, userId);
 
   const skip = (page - 1) * limit;
@@ -66,7 +66,7 @@ export const sendMessage = async (
   text: string,
 ) => {
   const chat = await Chat.findById(chatId);
-  if (!chat) throw Object.assign(new Error('Chat not found'), { statusCode: 404 });
+  if (!chat) throw Object.assign(new Error('Chat conversation not found.'), { statusCode: 404 });
   assertParticipant(chat, senderId);
 
   return Message.create({ chatId, senderId, text });

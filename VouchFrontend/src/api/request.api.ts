@@ -35,6 +35,9 @@ export const requestApi = {
   close: (requestId: string) =>
     apiClient.post<ApiResponse<ServiceRequest>>(`/requests/${requestId}/close`),
 
+  requestEnd: (requestId: string) =>
+    apiClient.post<ApiResponse<ServiceRequest>>(`/requests/${requestId}/request-end`),
+
   getStartupProfile: (startupUserId: string) =>
     apiClient.get<ApiResponse<any>>(`/requests/startup/${startupUserId}/profile`),
 };

@@ -1,11 +1,11 @@
 // Navigation type definitions for type-safe routing
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { NavigatorScreenParams } from '@react-navigation/native';
 import { User } from '../types';
 
 // --- Auth Stack ---
 export type AuthStackParamList = {
   Landing: undefined;
-  Login: undefined;
   Register: undefined;
   Onboarding: {
     role: 'STARTUP' | 'LAWYER' | 'CA';
@@ -24,7 +24,7 @@ export type StartupTabParamList = {
 
 // --- Startup Stack (inside each tab) ---
 export type StartupStackParamList = {
-  StartupTabs: undefined;
+  StartupTabs: NavigatorScreenParams<StartupTabParamList> | undefined;
   ProfessionalDetail: { userId: string };
   CreateRequest: { professionalUserId?: string };
   Chat: { requestId: string; chatId: string };

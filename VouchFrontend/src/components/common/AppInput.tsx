@@ -6,6 +6,7 @@ import {
   StyleSheet,
   TextInputProps,
   ViewStyle,
+  TouchableOpacity,
 } from 'react-native';
 import { COLORS, BORDER_RADIUS, SPACING } from '@utils/constants';
 
@@ -14,13 +15,14 @@ interface AppInputProps extends TextInputProps {
   error?: string;
   required?: boolean;
   containerStyle?: ViewStyle;
+  rightElement?: React.ReactNode;
 }
 
 const AppInput = forwardRef<TextInput, AppInputProps>(
   // Destructure `style` as `propStyle` so it is NOT inside `...props`.
   // Without this, `{...props}` would spread `style` AFTER the explicit style
   // array and override it — stripping border, background, etc.
-  ({ label, error, required, containerStyle, style: propStyle, ...props }, ref) => {
+  ({ label, error, required, containerStyle, style: propStyle, rightElement, ...props }, ref) => {
     return (
       <View style={[styles.container, containerStyle]}>
         {label ? (
@@ -29,18 +31,24 @@ const AppInput = forwardRef<TextInput, AppInputProps>(
             {required ? <Text style={styles.required}> *</Text> : null}
           </Text>
         ) : null}
-        <TextInput
-          ref={ref}
-          style={[
-            styles.inputBase,
-            props.multiline ? styles.inputMultiline : styles.inputSingleLine,
-            error ? styles.inputError : null,
-            propStyle,
-          ]}
-          placeholderTextColor={COLORS.textMuted}
-          autoCapitalize="none"
-          {...props}
-        />
+        <View style={styles.inputWrapper}>
+          <TextInput
+            ref={ref}
+            style={[
+              styles.inputBase,
+              props.multiline ? styles.inputMultiline : styles.inputSingleLine,
+              error ? styles.inputError : null,
+              rightElement ? styles.inputWithRight : null,
+              propStyle,
+            ]}
+            placeholderTextColor={COLORS.textMuted}
+            autoCapitalize="none"
+            {...props}
+          />
+          {rightElement ? (
+            <View style={styles.rightElement}>{rightElement}</View>
+          ) : null}
+        </View>
         {error ? <Text style={styles.error}>{error}</Text> : null}
       </View>
     );
@@ -75,6 +83,21 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: COLORS.textPrimary,
     backgroundColor: COLORS.surface,
+  },
+  inputWrapper: {
+    position: 'relative',
+  },
+  inputWithRight: {
+    paddingRight: 48,
+  },
+  rightElement: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: 46,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   // Only single-line gets a fixed height
   inputSingleLine: {

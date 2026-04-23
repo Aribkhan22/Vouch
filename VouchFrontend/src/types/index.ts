@@ -85,6 +85,8 @@ export interface ServiceRequest {
   createdAt: string;
   acceptedAt?: string;
   closedAt?: string;
+  endRequestedByStartup: boolean;
+  endRequestedByProfessional: boolean;
 }
 
 export interface Chat {

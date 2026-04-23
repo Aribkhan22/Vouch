@@ -25,19 +25,31 @@ type FormData = z.infer<typeof schema>;
 export default function CreateRequestScreen({ navigation }: StartupScreenProps<'CreateRequest'>) {
   const [apiError, setApiError] = useState<string | null>(null);
 
-  // Check for existing active requests
-  const { data: myReqs } = useQuery({
-    queryKey: ['myRequests'],
-    queryFn: () => requestApi.mine().then(r => r.data.data as ServiceRequest[]),
-  });
-  const activeRequest = (myReqs ?? []).find(r => r.status === 'OPEN' || r.status === 'ACCEPTED');
-
   const { control, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { category: 'TRADEMARK' },
   });
 
   const selectedCategory = watch('category');
+
+  // Check for existing active requests per profession type
+  const { data: myReqs } = useQuery({
+    queryKey: ['myRequests'],
+    queryFn: () => requestApi.mine().then(r => r.data.data as ServiceRequest[]),
+  });
+
+  const LAWYER_BLOCK = new Set(['CONTRACT_REVIEW', 'TRADEMARK', 'LITIGATION', 'IP_PROTECTION', 'DUE_DILIGENCE']);
+  const CA_BLOCK = new Set(['COMPANY_INCORPORATION', 'TAX_FILING', 'COMPLIANCE', 'OTHER']);
+
+  const activeLawyerReq = (myReqs ?? []).find(
+    r => (r.status === 'OPEN' || r.status === 'ACCEPTED') && LAWYER_BLOCK.has(r.category),
+  );
+  const activeCaReq = (myReqs ?? []).find(
+    r => (r.status === 'OPEN' || r.status === 'ACCEPTED') && CA_BLOCK.has(r.category),
+  );
+
+  const isLawyerSelected = LAWYER_BLOCK.has(selectedCategory);
+  const activeBlockingReq = isLawyerSelected ? activeLawyerReq : activeCaReq;
 
   const onSubmit = async (data: FormData) => {
     setApiError(null);
@@ -56,24 +68,41 @@ export default function CreateRequestScreen({ navigation }: StartupScreenProps<'
           <Text style={styles.back} onPress={() => navigation.goBack()}>← Back</Text>
           <Text style={styles.title}>New Service Request</Text>
 
-          {/* Block if already has active request */}
-          {activeRequest ? (
+          {/* Block if already has active request of the same type */}
+          {activeBlockingReq ? (
             <View style={styles.blockedCard}>
-              <Text style={styles.blockedTitle}>⚠️ Active Request Exists</Text>
-              <Text style={styles.blockedText}>
-                You already have an active {activeRequest.status === 'OPEN' ? 'open' : 'accepted'} request.
-                You can create a new one once it is rejected or closed.
-              </Text>
-              <TouchableOpacity style={styles.blockedBtn} onPress={() => navigation.goBack()}>
-                <Text style={styles.blockedBtnText}>← Go Back</Text>
-              </TouchableOpacity>
+              {activeLawyerReq && activeCaReq ? (
+                <>
+                  <Text style={styles.blockedTitle}>⚠️ All Services Requested</Text>
+                  <Text style={styles.blockedText}>
+                    You already have an active lawyer request ({activeLawyerReq.status.toLowerCase()}) and an active CA request ({activeCaReq.status.toLowerCase()}).
+                    {' '}Both must be completed before you can create a new request.
+                  </Text>
+                </>
+              ) : isLawyerSelected ? (
+                <>
+                  <Text style={styles.blockedTitle}>⚠️ Active Lawyer Request Exists</Text>
+                  <Text style={styles.blockedText}>
+                    You already have an active lawyer request ({activeBlockingReq.status.toLowerCase()}).
+                    It must be completed before creating another lawyer request.
+                    {' '}You can still create a CA request simultaneously — switch to a CA service below.
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.blockedTitle}>⚠️ Active CA Request Exists</Text>
+                  <Text style={styles.blockedText}>
+                    You already have an active CA request ({activeBlockingReq.status.toLowerCase()}).
+                    It must be completed before creating another CA request.
+                    {' '}You can still create a lawyer request simultaneously — switch to a lawyer service above.
+                  </Text>
+                </>
+              )}
             </View>
           ) : null}
 
           <ErrorMessage message={apiError} />
 
-          {!activeRequest ? (
-            <>
           <Text style={styles.label}>⚖️  LAWYER SERVICES</Text>
           <View style={styles.catWrap}>
             {(['CONTRACT_REVIEW', 'TRADEMARK', 'LITIGATION', 'IP_PROTECTION', 'DUE_DILIGENCE'] as ServiceCategory[]).map(c => (
@@ -101,6 +130,9 @@ export default function CreateRequestScreen({ navigation }: StartupScreenProps<'
               </TouchableOpacity>
             ))}
           </View>
+
+          {!activeBlockingReq ? (
+            <>
 
           <Controller control={control} name="description"
             render={({ field: { onChange, onBlur, value } }) => (

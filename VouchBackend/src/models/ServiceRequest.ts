@@ -14,6 +14,8 @@ export interface IServiceRequest extends Document {
   acceptedAt?: Date;
   closedAt?: Date;
   rejectedAt?: Date;
+  endRequestedByStartup: boolean;
+  endRequestedByProfessional: boolean;
 }
 
 const serviceRequestSchema = new Schema<IServiceRequest>(
@@ -41,6 +43,8 @@ const serviceRequestSchema = new Schema<IServiceRequest>(
     acceptedAt: { type: Date },
     closedAt: { type: Date },
     rejectedAt: { type: Date },
+    endRequestedByStartup: { type: Boolean, default: false },
+    endRequestedByProfessional: { type: Boolean, default: false },
   },
   { timestamps: { createdAt: true, updatedAt: false } },
 );

@@ -22,7 +22,7 @@ export const upsertProfessionalProfile = async (
 
 export const getProfessionalProfile = async (userId: string) => {
   const profile = await ProfessionalProfile.findOne({ userId });
-  if (!profile) throw Object.assign(new Error('Profile not found'), { statusCode: 404 });
+  if (!profile) throw Object.assign(new Error('Professional profile not found.'), { statusCode: 404 });
   return profile;
 };
 

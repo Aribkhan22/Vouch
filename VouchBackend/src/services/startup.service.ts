@@ -19,6 +19,6 @@ export const upsertStartupProfile = async (
 
 export const getStartupProfile = async (userId: string) => {
   const profile = await StartupProfile.findOne({ userId });
-  if (!profile) throw Object.assign(new Error('Profile not found'), { statusCode: 404 });
+  if (!profile) throw Object.assign(new Error('Startup profile not found.'), { statusCode: 404 });
   return profile;
 };

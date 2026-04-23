@@ -1,4 +1,4 @@
-// const DEV_HOST = '192.168.1.11'; // Physical device – use your machine's LAN IP
+// const DEV_HOST = '192.168.0.109'; // Physical device – use your machine's LAN IP
 const DEV_HOST = '10.0.2.2'; // Android emulator loopback
 export const API_BASE_URL = `http://${DEV_HOST}:5000/api/v1`;
 export const SOCKET_URL = `http://${DEV_HOST}:5000`;

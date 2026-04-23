@@ -57,6 +57,18 @@ export const close = async (req: Request, res: Response, next: NextFunction) => 
   }
 };
 
+export const requestEnd = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await requestService.requestEndService(req.params.id, req.user!.userId);
+    const message = result.status === 'CLOSED'
+      ? 'Service ended — both parties confirmed.'
+      : 'End service request recorded. Waiting for the other party to confirm.';
+    sendSuccess(res, result, message);
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const reject = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { reason } = req.body;

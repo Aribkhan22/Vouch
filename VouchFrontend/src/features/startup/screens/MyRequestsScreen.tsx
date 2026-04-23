@@ -58,28 +58,61 @@ export default function MyRequestsScreen() {
   }, [navigation]);
 
   const handleClose = useCallback(async (requestId: string) => {
-    Alert.alert('Close Request', 'Mark this request as closed?', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert('Cancel Request', 'Cancel this open request?', [
+      { text: 'No', style: 'cancel' },
       {
-        text: 'Close',
+        text: 'Cancel Request',
         style: 'destructive',
         onPress: async () => {
           try {
             await requestApi.close(requestId);
             qc.invalidateQueries({ queryKey: ['myRequests'] });
           } catch (err: any) {
-            Alert.alert('Error', err?.response?.data?.message ?? 'Failed to close request.');
+            Alert.alert('Error', err?.response?.data?.message ?? 'Failed to cancel request.');
           }
         },
       },
     ]);
   }, [qc]);
 
+  const handleRequestEnd = useCallback(async (requestId: string) => {
+    Alert.alert(
+      'End Service',
+      'Request to end this service? The professional must also confirm before it is closed.',
+      [
+        { text: 'Not yet', style: 'cancel' },
+        {
+          text: 'Request End',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const res = await requestApi.requestEnd(requestId);
+              await qc.invalidateQueries({ queryKey: ['myRequests'] });
+              const updated = res.data.data;
+              if (updated.status === 'CLOSED') {
+                Alert.alert(
+                  '✅ Service Completed',
+                  'Both parties have confirmed. The service has been marked as complete.',
+                );
+              } else {
+                Alert.alert(
+                  '⏳ Request Sent',
+                  'Your end-service request has been sent. Waiting for the professional to confirm.',
+                );
+              }
+            } catch (err: any) {
+              Alert.alert('Error', err?.response?.data?.message ?? 'Failed to request end.');
+            }
+          },
+        },
+      ],
+    );
+  }, [qc]);
+
   const allReqs = data ?? [];
   const sections = [
     { title: '⚖️  Lawyer Requests', data: allReqs.filter(r => LAWYER_CAT_SET.has(r.category)) },
-    { title: '📊  CA Requests', data: allReqs.filter(r => CA_CAT_SET.has(r.category)) },
-    { title: '📌  Other', data: allReqs.filter(r => r.category === 'OTHER') },
+    { title: '📊  CA Requests', data: allReqs.filter(r => CA_CAT_SET.has(r.category) || r.category === 'OTHER') },
   ].filter(s => s.data.length > 0);
 
   return (
@@ -88,7 +121,7 @@ export default function MyRequestsScreen() {
         <Text style={styles.title}>My Requests</Text>
         <TouchableOpacity
           style={styles.newBtn}
-          onPress={() => navigation.navigate('CreateRequest', {})}>
+          onPress={() => navigation.navigate('StartupTabs', { screen: 'Directory' })}>  
           <Text style={styles.newBtnText}>+ New</Text>
         </TouchableOpacity>
       </View>
@@ -148,6 +181,12 @@ export default function MyRequestsScreen() {
                 </View>
               )}
 
+              {item.status === 'CLOSED' && (
+                <View style={styles.closedBox}>
+                  <Text style={styles.closedText}>✅ Service completed</Text>
+                </View>
+              )}
+
               {item.status === 'REJECTED' && item.rejectionReason ? (
                 <View style={styles.rejectedBox}>
                   <Text style={styles.rejectedLabel}>❌ Rejected by professional</Text>
@@ -168,11 +207,37 @@ export default function MyRequestsScreen() {
                 </TouchableOpacity>
               )}
 
+              {item.status === 'ACCEPTED' && (
+                item.endRequestedByStartup && !item.endRequestedByProfessional ? (
+                  // Startup requested — waiting for professional
+                  <View style={styles.pendingEndBox}>
+                    <Text style={styles.pendingEndText}>⏳ Waiting for professional to confirm end of service…</Text>
+                  </View>
+                ) : item.endRequestedByProfessional && !item.endRequestedByStartup ? (
+                  // Professional requested — startup needs to confirm
+                  <View style={styles.confirmEndBox}>
+                    <Text style={styles.confirmEndText}>The professional has requested to end this service.</Text>
+                    <TouchableOpacity
+                      style={styles.confirmEndBtn}
+                      onPress={() => handleRequestEnd(item._id)}>
+                      <Text style={styles.confirmEndBtnText}>Confirm &amp; End Service</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : !item.endRequestedByStartup ? (
+                  // Neither requested yet
+                  <TouchableOpacity
+                    style={styles.endServiceBtn}
+                    onPress={() => handleRequestEnd(item._id)}>
+                    <Text style={styles.endServiceBtnText}>End Service</Text>
+                  </TouchableOpacity>
+                ) : null
+              )}
+
               {item.status === 'OPEN' && (
                 <TouchableOpacity
                   style={styles.closeBtn}
                   onPress={() => handleClose(item._id)}>
-                  <Text style={styles.closeBtnText}>Close Request</Text>
+                  <Text style={styles.closeBtnText}>Cancel Request</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -235,6 +300,16 @@ const styles = StyleSheet.create({
   },
   badgeText: { fontSize: 11, fontWeight: '700' },
   desc: { fontSize: 14, color: COLORS.textSecondary, marginBottom: SPACING.sm, lineHeight: 20 },
+  closedBox: {
+    backgroundColor: '#F0FDF4',
+    borderRadius: BORDER_RADIUS.md,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+    marginBottom: SPACING.xs,
+  },
+  closedText: { fontSize: 13, color: '#166534', fontWeight: '600', textAlign: 'center' },
   rejectedBox: {
     backgroundColor: '#FEF2F2',
     borderRadius: 8,
@@ -288,6 +363,42 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xs,
   },
   closeBtnText: { fontSize: 13, color: COLORS.textSecondary, fontWeight: '600' },
+  endServiceBtn: {
+    borderWidth: 1.5,
+    borderColor: '#DC2626',
+    borderRadius: BORDER_RADIUS.md,
+    paddingVertical: 8,
+    alignItems: 'center',
+    marginTop: SPACING.xs,
+  },
+  endServiceBtnText: { fontSize: 13, color: '#DC2626', fontWeight: '700' },
+  pendingEndBox: {
+    backgroundColor: '#FEF9C3',
+    borderRadius: BORDER_RADIUS.md,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginTop: SPACING.xs,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  pendingEndText: { fontSize: 12, color: '#92400E', fontWeight: '600', textAlign: 'center' },
+  confirmEndBox: {
+    backgroundColor: '#FFF1F2',
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.sm,
+    marginTop: SPACING.xs,
+    borderWidth: 1,
+    borderColor: '#FECDD3',
+    alignItems: 'center',
+  },
+  confirmEndText: { fontSize: 13, color: '#9F1239', fontWeight: '600', marginBottom: SPACING.xs, textAlign: 'center' },
+  confirmEndBtn: {
+    backgroundColor: '#DC2626',
+    borderRadius: BORDER_RADIUS.md,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+  },
+  confirmEndBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
   empty: { alignItems: 'center', marginTop: 60, paddingHorizontal: SPACING.lg },
   emptyTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 8 },
   emptyText: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 20 },

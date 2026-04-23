@@ -18,6 +18,7 @@ import AppButton from '@components/common/AppButton';
 import ErrorMessage from '@components/common/ErrorMessage';
 import { useAuth } from '@hooks/useAuth';
 import { COLORS, SPACING } from '@utils/constants';
+import EyeIcon from '@components/common/EyeIcon';
 
 const schema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -40,6 +41,7 @@ const ROLES = [
 export default function RegisterScreen({ navigation }: AuthScreenProps<'Register'>) {
   const { register } = useAuth();
   const [apiError, setApiError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     control,
@@ -140,11 +142,16 @@ export default function RegisterScreen({ navigation }: AuthScreenProps<'Register
               <AppInput
                 label="Password"
                 placeholder="Min 8 chars, letters + numbers"
-                secureTextEntry
+                secureTextEntry={!showPassword}
                 value={value}
                 onBlur={onBlur}
                 onChangeText={onChange}
                 error={errors.password?.message}
+                rightElement={
+                  <TouchableOpacity onPress={() => setShowPassword(p => !p)} hitSlop={8}>
+                    <EyeIcon visible={showPassword} />
+                  </TouchableOpacity>
+                }
               />
             )}
           />
@@ -158,7 +165,7 @@ export default function RegisterScreen({ navigation }: AuthScreenProps<'Register
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>Already have an account? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+            <TouchableOpacity onPress={() => navigation.navigate('Landing')}>
               <Text style={styles.link}>Sign in</Text>
             </TouchableOpacity>
           </View>
@@ -242,4 +249,5 @@ const styles = StyleSheet.create({
   },
   footerText: { fontSize: 14, color: COLORS.textSecondary },
   link: { fontSize: 14, color: COLORS.primary, fontWeight: '700' },
+  eyeIcon: { fontSize: 18, color: COLORS.textMuted },
 });

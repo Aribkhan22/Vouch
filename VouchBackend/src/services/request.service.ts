@@ -5,6 +5,10 @@ import { User } from '../models/User';
 import { Chat } from '../models/Chat';
 import { ServiceCategory, LAWYER_CATEGORIES, CA_CATEGORIES } from '../utils/constants';
 
+// Categories that block a new request of the same professional type
+const LAWYER_BLOCK_CATS = ['CONTRACT_REVIEW', 'TRADEMARK', 'LITIGATION', 'IP_PROTECTION', 'DUE_DILIGENCE'];
+const CA_BLOCK_CATS = ['COMPANY_INCORPORATION', 'TAX_FILING', 'COMPLIANCE', 'OTHER'];
+
 export const createRequest = async (
   startupUserId: string,
   data: {
@@ -14,14 +18,19 @@ export const createRequest = async (
     budgetRange: string;
   },
 ) => {
-  // Block if startup already has an active (OPEN or ACCEPTED) request
+  // Block only if there is already an active request of the SAME profession type
+  const isLawyerCat = LAWYER_BLOCK_CATS.includes(data.category);
+  const blockSet = isLawyerCat ? LAWYER_BLOCK_CATS : CA_BLOCK_CATS;
+  const profType = isLawyerCat ? 'lawyer' : 'CA';
+
   const active = await ServiceRequest.findOne({
     createdByStartupUserId: startupUserId,
     status: { $in: ['OPEN', 'ACCEPTED'] },
+    category: { $in: blockSet },
   });
   if (active) {
     throw Object.assign(
-      new Error('You already have an active request. Wait for it to be completed or rejected before creating a new one.'),
+      new Error(`You already have an active ${profType} request. It must be completed before creating another ${profType} request.`),
       { statusCode: 409 },
     );
   }
@@ -129,7 +138,7 @@ export const acceptRequest = async (requestId: string, professionalUserId: strin
   );
 
   if (!request) {
-    throw Object.assign(new Error('Request not found or already accepted'), {
+    throw Object.assign(new Error('This request has already been accepted by another professional. Please try a different request.'), {
       statusCode: 409,
     });
   }
@@ -150,20 +159,47 @@ export const acceptRequest = async (requestId: string, professionalUserId: strin
 };
 
 export const closeRequest = async (requestId: string, startupUserId: string) => {
+  // Only OPEN requests can be directly cancelled by the startup
   const request = await ServiceRequest.findOneAndUpdate(
     {
       _id: requestId,
       createdByStartupUserId: startupUserId,
-      status: { $in: ['OPEN', 'ACCEPTED'] },
+      status: 'OPEN',
     },
     { status: 'CLOSED', closedAt: new Date() },
     { new: true },
   );
   if (!request) {
-    throw Object.assign(new Error('Request not found or already closed'), {
+    throw Object.assign(new Error('Only open requests can be cancelled. Use \'End Service\' to close an accepted request mutually.'), {
       statusCode: 404,
     });
   }
+  return request;
+};
+
+export const requestEndService = async (requestId: string, userId: string) => {
+  const request = await ServiceRequest.findOne({ _id: requestId, status: 'ACCEPTED' });
+  if (!request) {
+    throw Object.assign(new Error('Request not found or is not currently active.'), { statusCode: 404 });
+  }
+
+  const isStartup = request.createdByStartupUserId.toString() === userId;
+  const isProfessional = request.assignedProfessionalUserId?.toString() === userId;
+
+  if (!isStartup && !isProfessional) {
+    throw Object.assign(new Error('You are not a party to this request.'), { statusCode: 403 });
+  }
+
+  if (isStartup) request.endRequestedByStartup = true;
+  if (isProfessional) request.endRequestedByProfessional = true;
+
+  // Both parties agreed — close the request
+  if (request.endRequestedByStartup && request.endRequestedByProfessional) {
+    request.status = 'CLOSED';
+    request.closedAt = new Date();
+  }
+
+  await request.save();
   return request;
 };
 
@@ -183,7 +219,7 @@ export const rejectRequest = async (
     { new: true },
   );
   if (!request) {
-    throw Object.assign(new Error('Request not found or cannot be rejected'), {
+    throw Object.assign(new Error('This request cannot be rejected. It may have already been processed or does not exist.'), {
       statusCode: 404,
     });
   }
@@ -195,6 +231,6 @@ export const getStartupProfile = async (startupUserId: string) => {
     StartupProfile.findOne({ userId: startupUserId }).lean(),
     User.findById(startupUserId).select('name email').lean(),
   ]);
-  if (!profile) throw Object.assign(new Error('Startup profile not found'), { statusCode: 404 });
+  if (!profile) throw Object.assign(new Error('Startup profile not found.'), { statusCode: 404 });
   return { ...profile, personName: user?.name ?? '', email: user?.email ?? '' };
 };
